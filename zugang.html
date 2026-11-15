@@ -38,6 +38,7 @@ button:disabled{opacity:.5}
 .row:first-child{border-top:0}
 .row div{flex:1;min-width:0}.row b{display:block}.row small{color:var(--muted)}
 .row button{width:auto;margin:0;padding:9px 12px;font-size:.9rem;color:var(--danger)}
+.row .yes{color:var(--amber-ink);background:var(--amber);border:0}
 </style>
 </head>
 <body>
@@ -50,19 +51,26 @@ button:disabled{opacity:.5}
   <a class="btn" href="./">Zur App</a>
 </section>
 
+<section id="inbox" hidden>
+  <h2>Neue Anfragen <span class="muted" id="iCnt"></span></h2>
+  <div id="iRows"></div>
+  <p class="msg" id="iMsg"></p>
+</section>
+
 <section id="neu" hidden>
-  <h2>Neues Passwort erstellen</h2>
+  <h2>Passwort an jemanden schicken</h2>
   <label for="n">Name</label>
   <input id="n" placeholder="z. B. Max Mustermann" autocomplete="off">
   <label for="m">E-Mail</label>
   <input id="m" type="email" autocapitalize="off" spellcheck="false" placeholder="name@beispiel.de" autocomplete="off">
-  <button id="go" class="amber">Passwort erstellen</button>
+  <button id="go" class="amber">Passwort erstellen und schicken</button>
   <p class="msg" id="msg"></p>
 </section>
 
 <section id="fertig" class="done" hidden>
   <h2 id="fT">Passwort</h2>
   <div class="pw" id="pw"></div>
+  <p class="muted" id="fInfo"></p>
   <a class="btn amber" id="mailBtn" href="#">✉︎ Per E-Mail schicken</a>
   <button id="shareBtn" class="sec">Teilen (WhatsApp …)</button>
   <button id="copyBtn" class="sec">Kopieren</button>
@@ -102,28 +110,46 @@ async function liste(){
     }
   }catch(e){msg("lMsg",e.message,1)}
 }
+function zeigen(j){
+  const first=j.name.split(/\s+/)[0];
+  const text=`Hallo ${first},\n\nhier ist dein Passwort für Ladestopp:\n\n${j.pw}\n\nSo geht's: Öffne ${app} in Safari oder Chrome, gib das Passwort ein, fertig.\nTipp: Über Teilen › „Zum Home-Bildschirm“ legst du die App als Icon ab.\n\nViele Grüße\nTekin`;
+  last=text;
+  $("fT").textContent=j.gesendet?`✓ Passwort an ${j.name} geschickt`:`Passwort für ${j.name}`;
+  $("fInfo").textContent=j.gesendet?`Die E-Mail ist an ${j.mail} raus. Du musst nichts weiter tun.`:`Automatisch senden ging nicht. Tippe auf „Per E-Mail schicken“.`;
+  $("pw").textContent=j.pw;
+  $("mailBtn").hidden=!!j.gesendet;
+  $("mailBtn").href=`mailto:${j.mail}?subject=${encodeURIComponent("Dein Passwort für Ladestopp")}&body=${encodeURIComponent(text)}`;
+  $("shareBtn").hidden=!navigator.share||!!j.gesendet;
+  $("fertig").hidden=false;$("fertig").scrollIntoView({behavior:"smooth"});
+}
+async function inbox(){
+  try{
+    const j=await call("anfragen",{});const rows=$("iRows");rows.innerHTML="";
+    $("inbox").hidden=!j.anfragen.length;$("iCnt").textContent=`(${j.anfragen.length})`;
+    for(const a of j.anfragen.slice().reverse()){
+      const r=document.createElement("div");r.className="row";
+      const t=document.createElement("div");t.innerHTML="<b></b><small></small>";t.querySelector("b").textContent=a.name;t.querySelector("small").textContent=a.mail+" · "+a.zeit;
+      const y=document.createElement("button");y.className="yes";y.textContent="Passwort senden";
+      y.onclick=async()=>{y.disabled=true;y.textContent="Sende …";try{zeigen(await call("senden",{id:a.id}));inbox();liste()}catch(e){msg("iMsg",e.message,1);y.disabled=false;y.textContent="Passwort senden"}};
+      const no=document.createElement("button");no.className="sec";no.textContent="Ablehnen";
+      no.onclick=async()=>{if(!confirm(a.name+" ablehnen?"))return;try{await call("ablehnen",{id:a.id});inbox()}catch(e){msg("iMsg",e.message,1)}};
+      r.append(t,y,no);rows.append(r);
+    }
+  }catch(e){msg("iMsg",e.message,1);$("inbox").hidden=false}
+}
 $("go").onclick=async()=>{
   const name=$("n").value.trim(),mail=$("m").value.trim().toLowerCase();
   if(!name){$("n").focus();return msg("msg","Bitte einen Namen eintragen.",1)}
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){$("m").focus();return msg("msg","Bitte eine gültige E-Mail eintragen.",1)}
-  $("go").disabled=true;msg("msg","");
-  try{
-    const j=await call("neu",{name,mail});
-    const first=name.split(/\s+/)[0];
-    const text=`Hallo ${first},\n\nhier ist dein Passwort für Ladestopp:\n\n${j.pw}\n\nSo geht's: Öffne ${app} in Safari oder Chrome, gib das Passwort ein, fertig.\nTipp: Über Teilen › „Zum Home-Bildschirm“ legst du die App als Icon ab.\n\nViele Grüße\nTekin`;
-    last=text;
-    $("fT").textContent="Passwort für "+name;$("pw").textContent=j.pw;
-    $("mailBtn").href=`mailto:${mail}?subject=${encodeURIComponent("Dein Passwort für Ladestopp")}&body=${encodeURIComponent(text)}`;
-    $("shareBtn").hidden=!navigator.share;
-    $("fertig").hidden=false;$("fertig").scrollIntoView({behavior:"smooth"});
-    $("n").value="";$("m").value="";liste();
-  }catch(e){msg("msg",e.message,1)}
+  $("go").disabled=true;msg("msg","Sende …");
+  try{zeigen(await call("senden",{name,mail}));msg("msg","");$("n").value="";$("m").value="";liste()}
+  catch(e){msg("msg",e.message,1)}
   finally{$("go").disabled=false}
 };
 $("shareBtn").onclick=()=>last&&navigator.share({title:"Dein Passwort für Ladestopp",text:last}).catch(()=>{});
 $("copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText($("pw").textContent);$("copyBtn").textContent="Kopiert ✓"}catch(e){}};
 if(!acc||!acc.chef){$("nochef").hidden=false}
-else{$("neu").hidden=false;$("liste").hidden=false;liste();}
+else{$("neu").hidden=false;$("liste").hidden=false;inbox();liste();}
 })();
 </script>
 </body>

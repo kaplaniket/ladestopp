@@ -203,8 +203,12 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
       <button class="primary" type="submit" id="lockBtn" style="margin-top:4px">Öffnen</button>
     </form>
     <hr>
-    <p class="hint" style="margin:0 0 4px"><b>Noch kein Passwort?</b> Schreib Tekin Kaplan eine E-Mail, dann bekommst du eins.</p>
-    <a class="opbtn" id="reqBtn" style="display:block;text-align:center;text-decoration:none" href="mailto:kaplaniket@gmail.com?subject=Ladestopp%3A%20Passwort%20bitte&body=Hallo%20Tekin%2C%0A%0Aich%20m%C3%B6chte%20die%20App%20Ladestopp%20nutzen.%20Kannst%20du%20mir%20ein%20Passwort%20schicken%3F%0A%0AViele%20Gr%C3%BC%C3%9Fe%0A">✉︎ E-Mail an Tekin schreiben</a>
+    <p class="hint" style="margin:0 0 8px"><b>Noch kein Passwort?</b> Trag Name und E-Mail ein. Tekin schickt dir dein Passwort per E-Mail.</p>
+    <input id="reqName" class="input" placeholder="Dein Name" autocomplete="name">
+    <input id="reqMail" class="input" style="margin-top:8px" type="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" autocapitalize="off">
+    <button class="opbtn" type="button" id="reqSend">Passwort anfragen</button>
+    <p class="hint" id="reqOk" style="margin-top:8px"></p>
+    <a class="opbtn" id="reqBtn" hidden style="display:block;text-align:center;text-decoration:none" href="mailto:kaplaniket@gmail.com?subject=Ladestopp%3A%20Passwort%20bitte&body=Hallo%20Tekin%2C%0A%0Aich%20m%C3%B6chte%20die%20App%20Ladestopp%20nutzen.%20Kannst%20du%20mir%20ein%20Passwort%20schicken%3F%0A%0AViele%20Gr%C3%BC%C3%9Fe%0A">✉︎ E-Mail an Tekin schreiben</a>
     <p class="hint" style="margin-top:14px"><a href="rechtliches.html" style="color:inherit">Impressum · Datenschutz</a> · © 2026 Tekin Kaplan</p>
   </div>
 </div>
@@ -284,6 +288,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
   <button type="button" id="updGo">Aktualisieren</button>
   <button type="button" class="x" id="updLater" aria-label="Später">✕</button>
 </div>
+<a class="updbar" id="reqBar" href="zugang.html" hidden style="text-decoration:none;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 72px)"><div><b id="reqBarT"></b><span>Tippe hier, um das Passwort zu schicken.</span></div><span style="font-size:1.4rem">›</span></a>
 <dialog class="sheet" id="instDialog" aria-labelledby="instTitle">
   <div class="sheetin">
     <div class="sheethead"><h2 id="instTitle">Ladestopp als App installieren</h2></div>
@@ -348,7 +353,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 (function(){
 "use strict";
 /* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
-const APP_VERSION="1.7.0";
+const APP_VERSION="1.8.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -751,6 +756,19 @@ $("lockForm").addEventListener("submit",async e=>{
   }catch(x){$("lockErr").textContent="Keine Verbindung. Bitte prüfe dein Internet und versuch es nochmal."}
   finally{$("lockBtn").disabled=false}
 });
+$("reqSend").addEventListener("click",async()=>{
+  const n=$("reqName").value.trim(),m=$("reqMail").value.trim().toLowerCase();
+  if(!n){$("reqName").focus();$("reqOk").textContent="Bitte deinen Namen eintragen.";return}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){$("reqMail").focus();$("reqOk").textContent="Bitte eine gültige E-Mail eintragen.";return}
+  $("reqSend").disabled=true;$("reqSend").textContent="Sende …";
+  try{
+    const r=await fetchT(PI_API+"anfrage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,mail:m})},12000);
+    if(r.ok){$("reqSend").textContent="✓ Angefragt";$("reqOk").textContent="Danke! Sobald Tekin zustimmt, bekommst du dein Passwort an "+m+".";return}
+    if(r.status===429){$("reqOk").textContent="Bitte warte kurz und versuch es dann nochmal.";}
+    else throw new Error(r.status);
+  }catch(e){$("reqOk").textContent="Gerade nicht erreichbar. Schreib Tekin bitte eine E-Mail:";$("reqBtn").hidden=false;}
+  $("reqSend").disabled=false;$("reqSend").textContent="Passwort anfragen";
+});
 
 let hereMarker=null, accCircle=null, watchId=null, live=false, lastPos=null, firstFix=true;
 function setLive(on){
@@ -837,6 +855,13 @@ $("tbGo").addEventListener("click",()=>{
   if(S.route){$("results").hidden?run():scrollToEl($("results"));if(!$("results").hidden)setStatus("Wähle mit „+ Als Stopp“ deine Ladestopps, dann erscheint „Navigation starten“.");return}
   run();
 });
+async function chefCheck(){
+  const acc=store.get("acc",null);if(!acc||!acc.chef)return;
+  try{const r=await piPost("anfragen",{token:acc.token});const n=(r.anfragen||[]).length;
+    $("reqBar").hidden=!n;$("reqBarT").textContent=`${n} neue Anfrage${n>1?"n":""}`;}catch(e){}
+}
+whenUnlocked(chefCheck);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&unlocked)chefCheck()});
 function syncMenu(){
   $("mAdminLi").hidden=!(store.get("acc",{})||{}).chef;
   $("mLiveT").classList.toggle("on",!!live);
