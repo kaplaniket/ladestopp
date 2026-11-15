@@ -1,4 +1,9 @@
 <!doctype html>
+<!--
+  Ladestopp – Ladesäulen entlang der Route
+  Copyright (c) 2026 Tekin Kaplan. Alle Rechte vorbehalten.
+  https://kaplaniket.github.io/ladestopp/
+-->
 <html lang="de">
 <head>
 <meta charset="utf-8">
@@ -10,6 +15,9 @@
 <link rel="icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
 <title>Ladestopp</title>
+<meta name="author" content="Tekin Kaplan">
+<meta name="copyright" content="© 2026 Tekin Kaplan">
+<meta name="application-name" content="Ladestopp">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -112,6 +120,15 @@ details.filters summary span{color:var(--muted);font-weight:400;font-size:.9rem}
 .pin.slow{background:#7A879C}.pin.mid{background:#3D73CC}.pin.fast{background:#173B7A}
 .pin.sel{background:var(--amber);color:var(--amber-ink);width:28px;height:28px;font-size:13px}
 .leaflet-container{font:inherit}
+.updbar{position:fixed;z-index:3000;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);background:var(--amber);color:var(--amber-ink);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);display:flex;gap:10px;align-items:center}
+.updbar[hidden]{display:none}
+.updbar div{flex:1;font-size:.95rem;line-height:1.3}
+.updbar b{display:block;font-family:"Barlow Semi Condensed",sans-serif;font-size:1.05rem}
+.updbar button{border:0;border-radius:8px;padding:10px 12px;font-weight:700;cursor:pointer;background:var(--amber-ink);color:var(--amber)}
+.updbar .x{background:transparent;color:var(--amber-ink);padding:6px 8px;font-size:1.1rem}
+.sig{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.sig b{color:var(--ink);font-weight:600}
+@media (min-width:700px){.updbar{left:auto;width:420px}}
 .opsel{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .opbtn{width:100%;margin-top:8px;padding:11px;border:1.5px solid var(--sign);border-radius:8px;background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer}
 dialog.sheet{border:0;padding:0;margin:0;width:100%;max-width:100%;height:100%;max-height:100%;background:var(--bg);color:var(--ink)}
@@ -137,7 +154,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
   <div id="map" role="region" aria-label="Karte"></div>
   <main class="panel">
     <div class="plate">
-      <h1>Ladestopp</h1>
+      <h1>Ladestopp <span id="plateVer" style="font-size:.8rem;font-weight:600;opacity:.75;vertical-align:middle"></span></h1>
       <p id="plateSub">Ziel eingeben, Ladesäulen auswählen, losfahren.</p>
     </div>
 
@@ -196,9 +213,15 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
     </div>
 
     <p class="foot">Ladesäulen: Ladesäulenregister der Bundesnetzagentur (Deutschland), sonst OpenStreetMap. Karte und Orte: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende, Route: OSRM. Angaben zu Leistung und Anbieter können unvollständig sein.</p>
+    <p class="sig"><span><b>Ladestopp</b> Version <span id="appVer"></span></span><span>© 2026 Tekin Kaplan · Alle Rechte vorbehalten</span></p>
   </main>
 </div>
 
+<div class="updbar" id="updBar" role="alert" hidden>
+  <div><b id="updTitle">Update verfügbar</b><span id="updNotes"></span></div>
+  <button type="button" id="updGo">Aktualisieren</button>
+  <button type="button" class="x" id="updLater" aria-label="Später">✕</button>
+</div>
 <dialog class="sheet" id="opDialog" aria-labelledby="opTitle">
   <div class="sheetin">
     <div class="sheethead"><h2 id="opTitle">Anbieter</h2><button type="button" class="ghost" id="opClear">Alle anzeigen</button></div>
@@ -212,6 +235,8 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 <script>
 (function(){
 "use strict";
+/* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
+const APP_VERSION="1.0.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -622,6 +647,28 @@ function startLive(){
   },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
 }
 startLive();
+/* ---------- Version und Update-Hinweis ---------- */
+$("appVer").textContent=APP_VERSION;$("plateVer").textContent="v"+APP_VERSION;
+function newer(a,b){const x=a.split(".").map(Number),y=b.split(".").map(Number);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0)}return false}
+let latest=null;
+async function checkUpdate(){
+  try{
+    const r=await fetch(new URL("version.json?t="+Date.now(),location.href).href,{cache:"no-store"});
+    if(!r.ok)return;const v=await r.json();
+    if(!v.version||!newer(v.version,APP_VERSION))return;
+    let skip=null;try{skip=sessionStorage.getItem("ladestopp:skip")}catch(e){}
+    if(skip===v.version)return;
+    latest=v.version;
+    $("updTitle").textContent=`Neue Version ${v.version} verfügbar`;
+    $("updNotes").textContent=(v.notes||[]).join(" · ");
+    $("updBar").hidden=false;
+  }catch(e){}
+}
+$("updGo").addEventListener("click",()=>{location.replace(location.pathname+"?v="+encodeURIComponent(latest||Date.now()))});
+$("updLater").addEventListener("click",()=>{$("updBar").hidden=true;try{sessionStorage.setItem("ladestopp:skip",latest)}catch(e){}});
+checkUpdate();
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
+setInterval(checkUpdate,30*60*1000);
 })();
 </script>
 </body>
