@@ -70,6 +70,18 @@ a{color:var(--sign)}
   <p class="msg" id="setupMsg"></p>
 </section>
 
+<section id="quick">
+  <h2>Ohne Schlüssel: Prüfwert erzeugen</h2>
+  <p class="muted">Solange der Schlüssel noch nicht schreiben darf: E-Mail und Passwort eintragen, Prüfwert kopieren und an Claude schicken. Claude schaltet ihn frei. E-Mail und Passwort verlassen dein Handy dabei nicht.</p>
+  <label for="qm">E-Mail</label>
+  <input id="qm" type="email" autocapitalize="off" spellcheck="false" placeholder="name@beispiel.de" autocomplete="off">
+  <label for="qp">Passwort</label>
+  <div class="row"><input id="qp" autocapitalize="off" spellcheck="false" autocomplete="off"><button class="sec mini" id="qgen" type="button">Neu</button></div>
+  <button id="qBtn" class="sec">Prüfwert erzeugen</button>
+  <p class="msg" id="qOut" style="word-break:break-all"></p>
+  <button id="qCopy" class="amber" hidden>Prüfwert kopieren</button>
+</section>
+
 <!-- Neuer Zugang -->
 <section id="add" hidden>
   <h2>Neuen Zugang anlegen</h2>
@@ -227,6 +239,12 @@ async function start(){
   }catch(e){$("setup").hidden=false;msg("setupMsg",e.message,"err")}
 }
 $("gen").onclick=gen;
+function qgen(){$("qp").value=`${W[rnd(W.length)]}-${W[rnd(W.length)]}-${W[rnd(W.length)]}-${rnd(90)+10}`}
+qgen();$("qgen").onclick=qgen;
+$("qBtn").onclick=async()=>{const m=$("qm").value.trim().toLowerCase(),p=$("qp").value;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){$("qm").focus();return}if(p.length<8){$("qp").focus();return}
+  const h=await sha("ladestopp:"+m+":"+p);msg("qOut","Prüfwert: "+h+"  ·  Passwort merken: "+p);$("qCopy").hidden=false;$("qCopy").dataset.h=h;};
+$("qCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("qCopy").dataset.h);$("qCopy").textContent="Kopiert ✓ – jetzt an Claude schicken"}catch(e){}};
 $("addBtn").onclick=add;
 $("tokSave").onclick=async()=>{
   const t=$("tok").value.trim();if(!t)return;
