@@ -206,10 +206,11 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
     <p class="err" id="lockErr" role="alert"></p>
     <hr>
     <h2 style="font-size:1.1rem;margin:0 0 4px">Noch keinen Zugang?</h2>
-    <p class="hint" style="margin:0 0 8px">Frag ihn bei Tekin Kaplan an. Es öffnet sich eine fertige E-Mail, die du nur noch abschickst. Den Zugangslink bekommst du dann als Antwort.</p>
+    <p class="hint" style="margin:0 0 8px">Frag ihn bei Tekin Kaplan an. Den Zugangslink bekommst du dann per E-Mail.</p>
     <input id="reqName" class="input" placeholder="Dein Name" autocomplete="name">
     <input id="reqMail" class="input" style="margin-top:8px" type="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" autocapitalize="off">
     <a class="opbtn" id="reqBtn" style="display:block;text-align:center;text-decoration:none" href="#">✉︎ Zugang anfragen</a>
+    <p class="hint" id="reqOk" style="margin-top:8px"></p>
     <p class="hint" style="margin-top:14px"><a href="rechtliches.html" style="color:inherit">Impressum · Datenschutz</a> · © 2026 Tekin Kaplan</p>
   </div>
 </div>
@@ -289,6 +290,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
   <button type="button" id="updGo">Aktualisieren</button>
   <button type="button" class="x" id="updLater" aria-label="Später">✕</button>
 </div>
+<a class="updbar" id="reqBar" href="zugang.html" hidden style="text-decoration:none;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 72px)"><div><b id="reqBarT"></b><span>Tippe hier zum Freischalten.</span></div><span style="font-size:1.4rem">›</span></a>
 <dialog class="sheet" id="instDialog" aria-labelledby="instTitle">
   <div class="sheetin">
     <div class="sheethead"><h2 id="instTitle">Ladestopp als App installieren</h2></div>
@@ -332,7 +334,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
       <li><button type="button" id="mNew"><span class="i">✚</span><span>Neue Route<small>Ziel und Stopps leeren</small></span></button></li>
       <li><button type="button" id="mInstall"><span class="i">📲</span><span>Als App installieren<small>Anleitung für iPhone und Android</small></span></button></li>
       <li><button type="button" id="mUpdate"><span class="i">⟳</span><span>Nach Update suchen<small id="mVer"></small></span></button></li>
-      <li id="mAdminLi" hidden><a href="zugang.html"><span class="i">👥</span><span>Zugänge verwalten<small>Personen freischalten oder entfernen</small></span></a></li>
+      <li id="mAdminLi" hidden><a href="zugang.html"><span class="i">👥</span><span>Zugänge verwalten<small>Personen freischalten<span id="mAdminCnt"></span></small></span></a></li>
       <li><a href="rechtliches.html"><span class="i">§</span><span>Impressum, Datenschutz, Lizenzen</span></a></li>
       <li><button type="button" id="mLock"><span class="i">🔒</span><span>Abmelden<small>Danach brauchst du deinen Zugangslink wieder</small></span></button></li>
     </ul>
@@ -353,7 +355,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 (function(){
 "use strict";
 /* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
-const APP_VERSION="1.5.0";
+const APP_VERSION="1.6.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -783,7 +785,22 @@ function reqHref(){
 $("reqBtn").addEventListener("click",e=>{e.preventDefault();
   if(!$("reqName").value.trim()){$("reqName").focus();$("reqName").placeholder="Bitte zuerst deinen Namen eintragen";return}
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($("reqMail").value.trim())){$("reqMail").focus();$("reqMail").placeholder="Bitte gültige E-Mail eintragen";return}
-  location.href=reqHref();});
+  sendRequest();});
+const PI_API="https://tekin.tail62f658.ts.net/ladestopp/api/";
+async function sendRequest(){
+  const n=$("reqName").value.trim(),em=$("reqMail").value.trim().toLowerCase();
+  $("reqBtn").textContent="Sende …";
+  try{
+    const r=await fetchT(PI_API+"anfrage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,mail:em})},12000);
+    if(r.ok){$("reqOk").textContent="✓ Anfrage gesendet. Du bekommst deinen Zugangslink an "+em+".";$("reqBtn").textContent="✓ Gesendet";return}
+    if(r.status===429){$("reqOk").textContent="Bitte warte kurz und versuch es dann noch einmal.";$("reqBtn").textContent="✉︎ Zugang anfragen";return}
+    throw new Error(r.status);
+  }catch(e){
+    $("reqBtn").textContent="✉︎ Zugang anfragen";
+    $("reqOk").textContent="Direkt senden ging gerade nicht, deshalb öffnet sich jetzt eine E-Mail. Bitte abschicken.";
+    location.href=reqHref();
+  }
+}
 
 let hereMarker=null, accCircle=null, watchId=null, live=false, lastPos=null, firstFix=true;
 function setLive(on){
@@ -870,6 +887,19 @@ $("tbGo").addEventListener("click",()=>{
   if(S.route){$("results").hidden?run():scrollToEl($("results"));if(!$("results").hidden)setStatus("Wähle mit „+ Als Stopp“ deine Ladestopps, dann erscheint „Navigation starten“.");return}
   run();
 });
+async function adminCheck(){
+  let k=null;try{k=localStorage.getItem("ladestopp-admin:key")}catch(e){}
+  if(!k)return;
+  try{
+    const t=await shaHex("ladestopp-admin:"+k);
+    const r=await fetchT(PI_API+"anfragen",{headers:{"X-Ladestopp-Admin":t},cache:"no-store"},10000);
+    if(!r.ok)return;const n=((await r.json()).anfragen||[]).length;
+    $("mAdminCnt").textContent=n?` · ${n} neue Anfrage${n>1?"n":""}`:"";
+    $("reqBar").hidden=!n;$("reqBarT").textContent=`${n} neue Zugangs-Anfrage${n>1?"n":""}`;
+  }catch(e){}
+}
+whenUnlocked(adminCheck);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&unlocked)adminCheck()});
 function syncMenu(){
   try{$("mAdminLi").hidden=!localStorage.getItem("ladestopp-admin:key")}catch(e){}
   $("mLiveT").classList.toggle("on",!!live);
