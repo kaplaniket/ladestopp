@@ -120,6 +120,16 @@ details.filters summary span{color:var(--muted);font-weight:400;font-size:.9rem}
 .pin.slow{background:#7A879C}.pin.mid{background:#3D73CC}.pin.fast{background:#173B7A}
 .pin.sel{background:var(--amber);color:var(--amber-ink);width:28px;height:28px;font-size:13px}
 .leaflet-container{font:inherit}
+.instbtn{width:100%;margin-top:10px;padding:11px;border:1.5px dashed var(--sign);border-radius:8px;background:transparent;color:var(--ink);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.instbtn[hidden]{display:none}
+.tabs{display:flex;gap:6px;margin-top:12px}
+.tabs button{flex:1;padding:10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);font-weight:600;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--sign);border-color:var(--sign);color:var(--sign-ink)}
+.steps{counter-reset:st;list-style:none;margin:14px 0 0;padding:0;overflow-y:auto;flex:1}
+.steps li{counter-increment:st;position:relative;padding:10px 0 12px 44px;border-bottom:1px solid var(--line);line-height:1.4}
+.steps li::before{content:counter(st);position:absolute;left:0;top:9px;width:30px;height:30px;border-radius:50%;background:var(--amber);color:var(--amber-ink);font:700 1rem "Barlow Semi Condensed",sans-serif;display:flex;align-items:center;justify-content:center}
+.steps .ico{display:inline-block;border:1.5px solid var(--line);border-radius:6px;padding:0 6px;margin:0 2px;font-weight:700;background:var(--surface)}
+.steps small{display:block;color:var(--muted);margin-top:2px}
 .updbar{position:fixed;z-index:3000;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);background:var(--amber);color:var(--amber-ink);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);display:flex;gap:10px;align-items:center}
 .updbar[hidden]{display:none}
 .updbar div{flex:1;font-size:.95rem;line-height:1.3}
@@ -157,6 +167,8 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
       <h1>Ladestopp <span id="plateVer" style="font-size:.8rem;font-weight:600;opacity:.75;vertical-align:middle"></span></h1>
       <p id="plateSub">Ziel eingeben, Ladesäulen auswählen, losfahren.</p>
     </div>
+
+    <button type="button" class="instbtn" id="instOpen" hidden>📲 Als App aufs Handy holen</button>
 
     <div class="field">
       <label for="from">Start</label>
@@ -222,6 +234,31 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
   <button type="button" id="updGo">Aktualisieren</button>
   <button type="button" class="x" id="updLater" aria-label="Später">✕</button>
 </div>
+<dialog class="sheet" id="instDialog" aria-labelledby="instTitle">
+  <div class="sheetin">
+    <div class="sheethead"><h2 id="instTitle">Ladestopp als App installieren</h2></div>
+    <p class="hint">Danach startest du Ladestopp wie jede andere App über ein eigenes Icon, ohne Browserleiste. Kostenlos, kein App Store nötig.</p>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tabIos" aria-selected="true">iPhone / iPad</button>
+      <button type="button" role="tab" id="tabAnd" aria-selected="false">Android</button>
+    </div>
+    <ol class="steps" id="stepsIos">
+      <li>Öffne diese Seite in <b>Safari</b>.<small>In WhatsApp oder der Claude-App: Link lange drücken › „In Safari öffnen“.</small></li>
+      <li>Tippe unten in der Leiste auf <span class="ico">⬆︎</span> <b>Teilen</b>.<small>Siehst du keine Leiste, tippe einmal unten auf die Adresse oder auf <span class="ico">•••</span>.</small></li>
+      <li>Scrolle nach unten und wähle <b>„Zum Home-Bildschirm“</b>.</li>
+      <li>Lass den Namen „Ladestopp“ stehen und tippe oben rechts auf <b>„Hinzufügen“</b>.</li>
+      <li>Starte die App über das neue Icon und tippe bei der Standortfrage auf <b>„Erlauben“</b>.<small>Kommt keine Frage: Einstellungen › Datenschutz & Sicherheit › Ortungsdienste › Safari-Websites › „Beim Verwenden der App“.</small></li>
+    </ol>
+    <ol class="steps" id="stepsAnd" hidden>
+      <li>Öffne diese Seite in <b>Chrome</b>.</li>
+      <li id="andDirect" hidden>Tippe hier: <button type="button" class="ghost" id="instNative">Jetzt installieren</button></li>
+      <li>Tippe oben rechts auf <span class="ico">⋮</span> (drei Punkte).</li>
+      <li>Wähle <b>„App installieren“</b> oder <b>„Zum Startbildschirm hinzufügen“</b> und bestätige.</li>
+      <li>Starte die App über das neue Icon und tippe bei der Standortfrage auf <b>„Zulassen“</b>.</li>
+    </ol>
+    <div class="sheetbar"><button type="button" class="primary" style="margin-top:0" id="instDone">Verstanden</button></div>
+  </div>
+</dialog>
 <dialog class="sheet" id="opDialog" aria-labelledby="opTitle">
   <div class="sheetin">
     <div class="sheethead"><h2 id="opTitle">Anbieter</h2><button type="button" class="ghost" id="opClear">Alle anzeigen</button></div>
@@ -236,7 +273,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 (function(){
 "use strict";
 /* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
-const APP_VERSION="1.0.0";
+const APP_VERSION="1.1.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -647,6 +684,20 @@ function startLive(){
   },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
 }
 startLive();
+/* ---------- Installations-Anleitung ---------- */
+const isStandalone=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
+const isAndroid=/android/i.test(navigator.userAgent);
+let installEvt=null;
+function showTab(and){$("tabIos").setAttribute("aria-selected",String(!and));$("tabAnd").setAttribute("aria-selected",String(and));$("stepsIos").hidden=and;$("stepsAnd").hidden=!and;}
+if(!isStandalone)$("instOpen").hidden=false;
+$("instOpen").addEventListener("click",()=>{showTab(isAndroid);const d=$("instDialog");d.showModal?d.showModal():d.setAttribute("open","")});
+$("instDone").addEventListener("click",()=>{const d=$("instDialog");d.close?d.close():d.removeAttribute("open")});
+$("tabIos").addEventListener("click",()=>showTab(false));
+$("tabAnd").addEventListener("click",()=>showTab(true));
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;$("andDirect").hidden=false;});
+$("instNative").addEventListener("click",async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$("andDirect").hidden=true;});
+window.addEventListener("appinstalled",()=>{$("instOpen").hidden=true});
+
 /* ---------- Version und Update-Hinweis ---------- */
 $("appVer").textContent=APP_VERSION;$("plateVer").textContent="v"+APP_VERSION;
 function newer(a,b){const x=a.split(".").map(Number),y=b.split(".").map(Number);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0)}return false}
