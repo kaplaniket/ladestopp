@@ -6,8 +6,14 @@ Die Nutzung der veröffentlichten App unter https://kaplaniket.github.io/ladesto
 ist erlaubt. Kopieren, Verändern, Weiterverbreiten oder kommerzielle Nutzung
 des Quellcodes ist ohne schriftliche Zustimmung von Tekin Kaplan nicht gestattet.
 
-Verwendete Daten und Dienste (eigene Lizenzen der jeweiligen Anbieter):
-- Ladesäulenregister der Bundesnetzagentur
-- Kartendaten © OpenStreetMap-Mitwirkende (ODbL)
-- Ortssuche: Photon (komoot), Routen: OSRM
-- Kartenbibliothek: Leaflet (BSD-2-Clause)
+Hinweis: Das Projekt liegt öffentlich auf GitHub. Nach den Nutzungsbedingungen
+von GitHub dürfen andere den Quellcode dort ansehen und innerhalb von GitHub
+abzweigen (Fork). Darüber hinaus werden keine Rechte eingeräumt.
+
+Verwendete Daten und Bestandteile Dritter (eigene Lizenzen der Rechteinhaber):
+- Ladesäulenregister der Bundesnetzagentur, CC BY 4.0
+  (für die App zusammengefasst und in Kacheln aufgeteilt)
+- Kartendaten © OpenStreetMap-Mitwirkende, ODbL 1.0
+- Ortssuche: Photon (komoot); Routen: FOSSGIS-Routingserver (OSRM)
+- Leaflet 1.9.4, BSD-2-Clause (vendor/leaflet/LICENSE)
+- Schriften Barlow / Barlow Semi Condensed, SIL OFL 1.1 (vendor/fonts/)
