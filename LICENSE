@@ -1,0 +1,13 @@
+Ladestopp
+Copyright (c) 2026 Tekin Kaplan. Alle Rechte vorbehalten.
+
+Quellcode, Gestaltung und Name dieser App sind urheberrechtlich geschützt.
+Die Nutzung der veröffentlichten App unter https://kaplaniket.github.io/ladestopp/
+ist erlaubt. Kopieren, Verändern, Weiterverbreiten oder kommerzielle Nutzung
+des Quellcodes ist ohne schriftliche Zustimmung von Tekin Kaplan nicht gestattet.
+
+Verwendete Daten und Dienste (eigene Lizenzen der jeweiligen Anbieter):
+- Ladesäulenregister der Bundesnetzagentur
+- Kartendaten © OpenStreetMap-Mitwirkende (ODbL)
+- Ortssuche: Photon (komoot), Routen: OSRM
+- Kartenbibliothek: Leaflet (BSD-2-Clause)
