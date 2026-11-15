@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F4E9E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ladestopp">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>Ladestopp</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --ink:#13233F; --muted:#5B6B85; --line:#D5DCE6;
+  --sign:#1F4E9E; --sign-ink:#FFFFFF; --amber:#F0B400; --amber-ink:#1B1600; --danger:#B3261E;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0E1729;--surface:#16223A;--ink:#E6ECF5;--muted:#93A3BD;--line:#2A3956;
+    --sign:#2C5FB8;--sign-ink:#FFFFFF;--amber:#F5C02A;--amber-ink:#1B1600;--danger:#FF8A80;color-scheme:dark}
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 "Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+h1,h2,.cond{font-family:"Barlow Semi Condensed","Barlow",system-ui,sans-serif}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+.app{flex:1;display:flex;flex-direction:column;min-height:0}
+#map{height:40vh;min-height:220px;flex:none;background:var(--line)}
+.panel{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 24px}
+@media (min-width:900px){
+  .app{flex-direction:row-reverse}
+  #map{height:auto;flex:1}
+  .panel{flex:none;width:420px;border-right:1px solid var(--line)}
+}
+
+.plate{background:var(--sign);color:var(--sign-ink);border-radius:10px;padding:12px 14px;border:2px solid var(--sign-ink);box-shadow:0 0 0 2px var(--sign)}
+.plate h1{margin:0;font-size:1.6rem;line-height:1.1;letter-spacing:.01em}
+.plate p{margin:2px 0 0;opacity:.85;font-size:.95rem}
+
+.field{position:relative;margin-top:12px}
+.field label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.row{display:flex;gap:8px}
+.input{width:100%;padding:12px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);font-size:1rem}
+.input:focus{border-color:var(--sign);outline:none}
+.iconbtn.live{background:var(--sign);border-color:var(--sign);color:#fff}
+.iconbtn{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:0 12px;cursor:pointer;font-size:.9rem}
+.suggest{position:absolute;z-index:1000;left:0;right:0;top:100%;margin:4px 0 0;padding:0;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:260px;overflow:auto}
+.suggest li{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line)}
+.suggest li:last-child{border-bottom:0}
+.suggest li small{display:block;color:var(--muted)}
+.suggest li:hover,.suggest li[aria-selected="true"]{background:var(--bg)}
+
+.primary{width:100%;margin-top:14px;padding:14px;border:0;border-radius:8px;background:var(--sign);color:var(--sign-ink);font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:1.15rem;cursor:pointer}
+.primary:disabled{opacity:.55;cursor:default}
+.go{background:var(--amber);color:var(--amber-ink)}
+
+details.filters{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+details.filters summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.filters summary::-webkit-details-marker{display:none}
+details.filters summary span{color:var(--muted);font-weight:400;font-size:.9rem}
+.group{margin-top:12px}
+.group h2{font-size:1rem;margin:0 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:.92rem}
+.chip[aria-pressed="true"]{background:var(--sign);border-color:var(--sign);color:var(--sign-ink)}
+.chip .n{opacity:.7;margin-left:4px;font-size:.85em}
+.hint{color:var(--muted);font-size:.88rem;margin:6px 0 0}
+
+.status{margin-top:12px;font-size:.95rem;color:var(--muted);min-height:1.2em}
+.status.err{color:var(--danger)}
+
+.summary{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 8px}
+.summary h2{margin:0;font-size:1.25rem}
+.summary span{color:var(--muted);font-size:.9rem}
+
+.stops{background:var(--surface);border:2px solid var(--amber);border-radius:10px;padding:10px 12px;margin-top:12px}
+.stops h2{margin:0 0 6px;font-size:1.05rem}
+.stops ol{margin:0;padding-left:1.3em}
+.stops li{margin:2px 0}
+.navrow{display:flex;gap:8px}
+.navrow a{flex:1;text-align:center;text-decoration:none;display:block}
+.secondary{margin-top:8px;padding:10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-weight:600;font-size:.95rem}
+
+.list{list-style:none;margin:0;padding:0}
+.st{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:grid;grid-template-columns:56px 1fr;gap:4px 12px;cursor:pointer}
+.st.sel{border:2px solid var(--amber);padding:9px 11px}
+.st.focus{box-shadow:0 0 0 3px var(--sign)}
+.km{grid-row:span 3;text-align:center;font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;line-height:1.05;padding-top:2px}
+.km b{display:block;font-size:1.35rem}
+.km small{font-size:.75rem;color:var(--muted);font-weight:600}
+.st h3{margin:0;font-size:1rem;font-weight:600}
+.meta{font-size:.88rem;color:var(--muted)}
+.pw{display:inline-block;font-weight:700;color:var(--sign);margin-right:6px}
+@media (prefers-color-scheme:dark){.pw{color:#8DB4FF}}
+.acts{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.acts button,.acts a{border:1.5px solid var(--line);background:transparent;border-radius:6px;padding:6px 10px;font-size:.88rem;cursor:pointer;color:var(--ink);text-decoration:none}
+.st.sel .acts .add{background:var(--amber);border-color:var(--amber);color:var(--amber-ink)}
+.empty{color:var(--muted);text-align:center;padding:18px 8px}
+.foot{margin-top:18px;font-size:.78rem;color:var(--muted)}
+.foot a{color:inherit}
+
+.pin{width:22px;height:22px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font:700 11px "Barlow Semi Condensed",sans-serif;color:#fff}
+.pin.slow{background:#7A879C}.pin.mid{background:#3D73CC}.pin.fast{background:#173B7A}
+.pin.sel{background:var(--amber);color:var(--amber-ink);width:28px;height:28px;font-size:13px}
+.leaflet-container{font:inherit}
+.opsel{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.opbtn{width:100%;margin-top:8px;padding:11px;border:1.5px solid var(--sign);border-radius:8px;background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer}
+dialog.sheet{border:0;padding:0;margin:0;width:100%;max-width:100%;height:100%;max-height:100%;background:var(--bg);color:var(--ink)}
+@media (min-width:700px){dialog.sheet{margin:auto;width:480px;height:80vh;border-radius:12px}}
+dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
+.sheetin{display:flex;flex-direction:column;height:100%;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.sheethead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sheethead h2{margin:0;font-size:1.3rem}
+.oplist{list-style:none;margin:10px 0 0;padding:0;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.oplist label{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.oplist input{width:22px;height:22px;accent-color:var(--sign);flex:none}
+.oplist .cnt{margin-left:auto;color:var(--muted);font-size:.9rem}
+.oplist .none{opacity:.5}
+.sheetbar{display:flex;gap:8px;margin-top:10px}
+.sheetbar button{flex:1}
+.ghost{padding:12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);font-weight:600;cursor:pointer}
+.tiles-dark{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="map" role="region" aria-label="Karte"></div>
+  <main class="panel">
+    <div class="plate">
+      <h1>Ladestopp</h1>
+      <p id="plateSub">Ziel eingeben, Ladesäulen auswählen, losfahren.</p>
+    </div>
+
+    <div class="field">
+      <label for="from">Start</label>
+      <div class="row">
+        <input id="from" class="input" autocomplete="off" placeholder="Mein Standort" aria-autocomplete="list">
+        <button id="locBtn" class="iconbtn" type="button" aria-label="Meinen Standort verwenden">📍</button>
+      </div>
+      <ul class="suggest" id="fromList" hidden></ul>
+    </div>
+    <div class="field">
+      <label for="to">Ziel</label>
+      <input id="to" class="input" autocomplete="off" placeholder="Stadt, Adresse oder Ort" aria-autocomplete="list">
+      <ul class="suggest" id="toList" hidden></ul>
+    </div>
+
+    <div class="field">
+      <label>Anbieter</label>
+      <div class="opsel" id="opChips"></div>
+      <button type="button" class="opbtn" id="opOpen">Anbieter auswählen</button>
+    </div>
+
+    <details class="filters" id="filters">
+      <summary>Filter <span id="filterSum"></span></summary>
+      <div class="group">
+        <h2>Stecker</h2>
+        <div class="chips" id="plugChips"></div>
+      </div>
+      <div class="group">
+        <h2>Ladeleistung mindestens</h2>
+        <div class="chips" id="powerChips"></div>
+      </div>
+      <div class="group">
+        <h2>Maximaler Umweg von der Route</h2>
+        <div class="chips" id="radiusChips"></div>
+      </div>
+    </details>
+
+    <button id="searchBtn" class="primary" type="button">Ladestationen auf der Route suchen</button>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <section id="stopsBox" class="stops" hidden>
+      <h2>Deine Ladestopps</h2>
+      <ol id="stopsList"></ol>
+      <a id="gmapsBtn" class="primary go" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Navigation starten (Google Maps)</a>
+      <div class="navrow">
+        <a id="appleBtn" class="secondary" target="_blank" rel="noopener">Nächster Stopp in Apple Karten</a>
+      </div>
+      <p class="hint" id="wpHint"></p>
+    </section>
+
+    <div id="results" hidden>
+      <div class="summary"><h2 id="resTitle">Ladestationen</h2><span id="resCount"></span></div>
+      <ul class="list" id="list"></ul>
+    </div>
+
+    <p class="foot">Ladesäulen: Ladesäulenregister der Bundesnetzagentur (Deutschland), sonst OpenStreetMap. Karte und Orte: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende, Route: OSRM. Angaben zu Leistung und Anbieter können unvollständig sein.</p>
+  </main>
+</div>
+
+<dialog class="sheet" id="opDialog" aria-labelledby="opTitle">
+  <div class="sheetin">
+    <div class="sheethead"><h2 id="opTitle">Anbieter</h2><button type="button" class="ghost" id="opClear">Alle anzeigen</button></div>
+    <input id="opSearch" class="input" style="margin-top:10px" placeholder="Anbieter suchen" autocomplete="off">
+    <p class="hint" id="opHint"></p>
+    <ul class="oplist" id="opList"></ul>
+    <div class="sheetbar"><button type="button" class="primary" style="margin-top:0" id="opDone">Fertig</button></div>
+  </div>
+</dialog>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const store = {
+  get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem("ladestopp:"+k,JSON.stringify(v))}catch(e){}}
+};
+
+const PLUGS = [
+  {id:"ccs", label:"CCS", keys:["type2_combo","tesla_supercharger_ccs","ccs"]},
+  {id:"type2", label:"Typ 2", keys:["type2","type2_cable"]},
+  {id:"chademo", label:"CHAdeMO", keys:["chademo"]},
+  {id:"tesla", label:"Tesla", keys:["tesla_supercharger","tesla_destination"]},
+  {id:"schuko", label:"Schuko", keys:["schuko"]}
+];
+const BRANDS = [
+  ["IONITY",/ionity/i],["Tesla",/tesla/i],["EnBW",/enbw/i],["Aral pulse",/aral/i],["Allego",/allego/i],
+  ["Fastned",/fastned/i],["EWE Go",/\bewe\b/i],["Shell Recharge",/shell|newmotion/i],["E.ON",/e\.?on\b|eon drive/i],
+  ["Mer",/^mer\b|mer germany/i],["Lidl",/lidl/i],["Kaufland",/kaufland/i],["Aldi",/aldi/i],["Pfalzwerke",/pfalzwerke/i],
+  ["Vattenfall",/vattenfall|incharge/i],["TotalEnergies",/total/i],["BP",/^bp\b/i],["Elli",/elli\b|volkswagen group charging/i],
+  ["Electra",/electra/i],["Wirelane",/wirelane/i],["Ladenetz",/ladenetz/i],["Innogy / RWE",/innogy|rwe/i],
+  ["Westenergie",/westenergie/i],["EnBW / ODR",/\bodr\b/i],["Comfortcharge",/comfortcharge|telekom/i],["Mobiliti / SWM",/swm\b/i],
+  ["Ladeverbund+",/ladeverbund/i],["Rewe",/rewe/i],["Edeka",/edeka/i],["McDonald’s",/mcdonald/i],["IKEA",/ikea/i],["Porsche",/porsche/i],
+  ["Mercedes-Benz",/mercedes/i],["BMW",/\bbmw\b/i],["Hyundai",/hyundai/i],["Smatrics",/smatrics/i],["Qwello",/qwello/i],["Tank E",/tank ?e\b/i]
+];
+function brandOf(raw){raw=(raw||"").trim();if(!raw)return "";for(const [n,re] of BRANDS)if(re.test(raw))return n;
+  return raw.replace(/\s+(GmbH|AG|SE|KG|mbH|GmbH & Co\.? KG|e\.V\.)\.?$/i,"").trim();}
+const POWERS = [0,22,50,150];
+const RADII = [1,3,5];
+const S = {
+  from:null, to:null,
+  plugs: store.get("plugs",[]),
+  power: store.get("power",0),
+  radius: store.get("radius",3),
+  ops: store.get("ops",[]),
+  stations:[], route:null, samples:[], loadedOps:null,
+  selected:new Set(), focus:null
+};
+
+const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+const map = L.map("map",{zoomControl:false}).setView([51.16,10.45],6);
+L.control.zoom({position:"topright"}).addTo(map);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {maxZoom:19,className:dark?"tiles-dark":"",attribution:"© OpenStreetMap"}).addTo(map);
+const routeLayer = L.layerGroup().addTo(map);
+const stLayer = L.layerGroup().addTo(map);
+const markers = new Map();
+
+function hav(a,b){const R=6371,r=Math.PI/180,dLa=(b[0]-a[0])*r,dLo=(b[1]-a[1])*r;
+  const x=Math.sin(dLa/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function setStatus(t,err){const el=$("status");el.textContent=t||"";el.classList.toggle("err",!!err)}
+function fmtDur(s){const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h?`${h} h ${m} min`:`${m} min`}
+async function fetchT(url,opts={},ms=30000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);
+  try{return await fetch(url,{...opts,signal:c.signal})}finally{clearTimeout(t)}}
+
+function setupSuggest(inputId,listId,key){
+  const inp=$(inputId), list=$(listId); let timer=null, items=[], idx=-1, seq=0;
+  inp.addEventListener("input",()=>{
+    S[key]=null; clearTimeout(timer);
+    const q=inp.value.trim(); if(q.length<3){list.hidden=true;return}
+    timer=setTimeout(async()=>{
+      const my=++seq;
+      try{
+        const c=map.getCenter();
+        const r=await fetchT(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=de&lat=${c.lat}&lon=${c.lng}`,{},10000);
+        const j=await r.json(); if(my!==seq)return;
+        items=(j.features||[]).map(f=>{const p=f.properties;
+          const name=p.name||[p.street,p.housenumber].filter(Boolean).join(" ")||p.city||"Ort";
+          const sub=[p.street&&p.name?[p.street,p.housenumber].filter(Boolean).join(" "):"",p.postcode,p.city&&p.city!==name?p.city:"",p.country].filter(Boolean).join(", ");
+          return {name,sub,lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]}});
+        idx=-1; render();
+      }catch(e){list.hidden=true}
+    },300);
+  });
+  function render(){
+    if(!items.length){list.hidden=true;return}
+    list.innerHTML=items.map((it,i)=>`<li role="option" data-i="${i}" aria-selected="${i===idx}">${esc(it.name)}<small>${esc(it.sub)}</small></li>`).join("");
+    list.hidden=false;
+  }
+  function pick(i){const it=items[i];if(!it)return;S[key]={lat:it.lat,lon:it.lon,label:it.name};inp.value=it.name;list.hidden=true;
+    if(key==="to")map.setView([it.lat,it.lon],11)}
+  list.addEventListener("mousedown",e=>{const li=e.target.closest("li");if(li){e.preventDefault();pick(+li.dataset.i)}});
+  inp.addEventListener("keydown",e=>{
+    if(list.hidden)return;
+    if(e.key==="ArrowDown"){idx=Math.min(items.length-1,idx+1);render();e.preventDefault()}
+    else if(e.key==="ArrowUp"){idx=Math.max(0,idx-1);render();e.preventDefault()}
+    else if(e.key==="Enter"){pick(idx<0?0:idx);e.preventDefault()}
+    else if(e.key==="Escape"){list.hidden=true}
+  });
+  inp.addEventListener("blur",()=>setTimeout(()=>list.hidden=true,150));
+}
+setupSuggest("from","fromList","from");
+setupSuggest("to","toList","to");
+async function geocodeOnce(q){
+  const r=await fetchT(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lang=de`,{},10000);
+  const j=await r.json(); const f=(j.features||[])[0]; if(!f)return null;
+  return {lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],label:f.properties.name||q};
+}
+function myPosition(){
+  return new Promise((res,rej)=>{
+    if(!navigator.geolocation)return rej(new Error("Standort wird von diesem Browser nicht unterstützt."));
+    navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lon:p.coords.longitude,label:"Mein Standort",here:true}),
+      ()=>rej(new Error("Standort nicht freigegeben. Erlaube den Standortzugriff oder tippe einen Startort ein.")),
+      {enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+  });
+}
+$("locBtn").addEventListener("click",()=>startLive());
+$("from").addEventListener("focus",()=>{if(live)$("from").select()});
+$("from").addEventListener("input",()=>{if(live)setLive(false)});
+
+function chip(label,pressed,onClick,count){
+  const b=document.createElement("button");b.type="button";b.className="chip";b.setAttribute("aria-pressed",pressed);
+  b.innerHTML=esc(label)+(count!=null?`<span class="n">${count}</span>`:"");b.addEventListener("click",onClick);return b;
+}
+function renderFilters(){
+  const pc=$("plugChips");pc.innerHTML="";
+  PLUGS.forEach(p=>pc.append(chip(p.label,S.plugs.includes(p.id),()=>{
+    S.plugs=S.plugs.includes(p.id)?S.plugs.filter(x=>x!==p.id):[...S.plugs,p.id];store.set("plugs",S.plugs);renderFilters();renderList()})));
+  const pw=$("powerChips");pw.innerHTML="";
+  POWERS.forEach(v=>pw.append(chip(v?`${v} kW`:"Egal",S.power===v,()=>{S.power=v;store.set("power",v);renderFilters();renderList()})));
+  const rc=$("radiusChips");rc.innerHTML="";
+  RADII.forEach(v=>rc.append(chip(`${v} km`,S.radius===v,()=>{
+    const changed=S.radius!==v;S.radius=v;store.set("radius",v);renderFilters();
+    if(changed&&S.route)loadStations();})));
+  renderOps();
+  const parts=[];
+  if(S.plugs.length)parts.push(S.plugs.map(id=>PLUGS.find(p=>p.id===id).label).join(", "));
+  if(S.power)parts.push(`ab ${S.power} kW`);
+  parts.push(`${S.radius} km Umweg`);
+  $("filterSum").textContent=parts.join(", ");
+}
+S.allOps=new Map();
+(async()=>{try{const r=await fetchT(dataUrl("operators.json"),{},15000);const j=await r.json();
+  (j.ops||[]).forEach(([n,c])=>{const b=brandOf(n);if(b)S.allOps.set(b,(S.allOps.get(b)||0)+c)});}catch(e){}})();
+function opCounts(){
+  const counts=new Map();
+  S.stations.forEach(s=>{if(s.op)counts.set(s.op,(counts.get(s.op)||0)+1)});
+  return counts;
+}
+function renderOps(){
+  const oc=$("opChips");oc.innerHTML="";
+  if(!S.ops.length){oc.innerHTML='<span class="hint" style="margin:0">Alle Anbieter werden angezeigt.</span>'}
+  else S.ops.forEach(o=>oc.append(chip(o+" ✕",true,()=>{S.ops=S.ops.filter(x=>x!==o);store.set("ops",S.ops);renderFilters();renderList();reloadIfNeeded()})));
+  $("opOpen").textContent=S.ops.length?`Anbieter ändern (${S.ops.length} gewählt)`:"Nur bestimmte Anbieter anzeigen";
+}
+function renderOpList(){
+  const counts=opCounts(), q=$("opSearch").value.trim().toLowerCase();
+  const routeMode=S.stations.length>0&&S.loadedOps===null;
+  const base=routeMode?counts:S.allOps;
+  const names=new Set([...(routeMode?counts.keys():[]),...S.allOps.keys(),...BRANDS.map(b=>b[0]),...S.ops]);
+  let arr=[...names].filter(n=>!q||n.toLowerCase().includes(q));
+  arr.sort((a,b)=>(S.ops.includes(b)-S.ops.includes(a))||((base.get(b)||0)-(base.get(a)||0))||a.localeCompare(b,"de"));
+  $("opHint").textContent=routeMode?"Zahl = Standorte auf deiner aktuellen Route.":"Zahl = Standorte in ganz Deutschland. Wähle deine Anbieter, dann wird nur nach diesen gesucht.";
+  $("opList").innerHTML=arr.map(n=>{const c=counts.get(n)||0;
+    const v=base.get(n)||0;
+    return `<li><label class="${routeMode&&!v?"none":""}"><input type="checkbox" value="${esc(n)}"${S.ops.includes(n)?" checked":""}>${esc(n)}<span class="cnt">${v?v.toLocaleString("de-DE"):""}</span></label></li>`}).join("")
+    ||'<li class="empty">Kein Anbieter gefunden.</li>';
+}
+$("opOpen").addEventListener("click",()=>{$("opSearch").value="";renderOpList();const d=$("opDialog");d.showModal?d.showModal():d.setAttribute("open","")});
+$("opSearch").addEventListener("input",renderOpList);
+$("opList").addEventListener("change",e=>{const v=e.target.value;if(!v)return;
+  S.ops=e.target.checked?[...new Set([...S.ops,v])]:S.ops.filter(x=>x!==v);store.set("ops",S.ops);renderFilters();renderList();});
+$("opClear").addEventListener("click",()=>{S.ops=[];store.set("ops",S.ops);renderOpList();renderFilters();renderList()});
+$("opDone").addEventListener("click",()=>{const d=$("opDialog");d.close?d.close():d.removeAttribute("open");reloadIfNeeded()});
+
+$("searchBtn").addEventListener("click",run);
+$("to").addEventListener("keydown",e=>{if(e.key==="Enter"&&$("toList").hidden)run()});
+
+async function run(){
+  const btn=$("searchBtn");btn.disabled=true;
+  try{
+    setStatus("Suche Start und Ziel …");
+    let from=live&&lastPos?lastPos:S.from;
+    if(!from){const t=$("from").value.trim(); from=(t&&!live)?await geocodeOnce(t):await myPosition();}
+    if(!from)throw new Error("Startort nicht gefunden. Prüfe die Schreibweise.");
+    let to=S.to;
+    if(!to){const t=$("to").value.trim(); if(!t)throw new Error("Gib ein Ziel ein."); to=await geocodeOnce(t);}
+    if(!to)throw new Error("Ziel nicht gefunden. Prüfe die Schreibweise.");
+    S.from=from;S.to=to;
+    setStatus("Berechne Route …");
+    const r=await fetchT(`https://router.project-osrm.org/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=full&geometries=geojson`,{},25000);
+    const j=await r.json();
+    if(j.code!=="Ok"||!j.routes?.length)throw new Error("Keine Route gefunden.");
+    const rt=j.routes[0];
+    const coords=rt.geometry.coordinates.map(c=>[c[1],c[0]]);
+    S.route={coords,dist:rt.distance,dur:rt.duration};
+    S.selected.clear();
+    const samples=[{p:coords[0],km:0}];let acc=0,since=0;
+    for(let i=1;i<coords.length;i++){const d=hav(coords[i-1],coords[i]);acc+=d;since+=d;
+      if(since>=2||i===coords.length-1){samples.push({p:coords[i],km:acc});since=0}}
+    S.samples=samples;
+    routeLayer.clearLayers();
+    L.polyline(coords,{color:dark?"#6FA0F0":"#1F4E9E",weight:6,opacity:.85}).addTo(routeLayer);
+    L.circleMarker(coords[0],{radius:7,color:"#fff",weight:3,fillColor:"#1F4E9E",fillOpacity:1}).addTo(routeLayer);
+    L.circleMarker(coords[coords.length-1],{radius:8,color:"#fff",weight:3,fillColor:"#B3261E",fillOpacity:1}).addTo(routeLayer).bindTooltip(esc(to.label));
+    map.fitBounds(L.latLngBounds(coords),{padding:[24,24]});
+    $("plateSub").textContent=`${from.label} → ${to.label}: ${Math.round(rt.distance/1000)} km, ${fmtDur(rt.duration)}`;
+    await loadStations();
+  }catch(e){setStatus(e.name==="AbortError"?"Der Dienst antwortet gerade nicht. Versuch es gleich noch einmal.":e.message,true)}
+  finally{btn.disabled=false}
+}
+
+const OVERPASS=["https://overpass-api.de/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
+function opPattern(name){
+  const b=BRANDS.find(x=>x[0]===name);
+  if(b)return b[1].source.replace(/\\b/g,"").replace(/\\\./g,"[.]").replace(/\\s/g," ").replace(/\^/g,"");
+  return name.toLowerCase().replace(/[^\p{L}\p{N} ]/gu,".");
+}
+function dataUrl(f){return new URL("data/"+f,location.href).href}
+const TILES=new Map();
+function getTile(k){
+  if(!TILES.has(k))TILES.set(k,fetchT(dataUrl("t/"+k+".json"),{},20000)
+    .then(r=>{if(r.status===404)return [];if(!r.ok)throw new Error(r.status);return r.json()})
+    .catch(e=>{TILES.delete(k);return null}));
+  return TILES.get(k);
+}
+async function registerStations(pts,radius,pat){
+  const keys=new Set();
+  for(const [la,lo] of pts){const dLa=radius/111,dLo=radius/(111*Math.max(.2,Math.cos(la*Math.PI/180)));
+    for(let a=Math.floor(la-dLa);a<=Math.floor(la+dLa);a++)for(let b=Math.floor(lo-dLo);b<=Math.floor(lo+dLo);b++)keys.add(a+"_"+b);}
+  const tiles=await Promise.all([...keys].map(getTile));
+  if(tiles.some(t=>t===null))throw new Error("tiles");
+  const rx=pat?new RegExp(pat,"i"):null, out=[];
+  const pad=radius/111*1.6;
+  for(const t of tiles)for(const s of t){
+    const [lat,lon,op,name,addr,kw,n,plugs,hours]=s;
+    if(rx&&!rx.test(op||""))continue;
+    let ok=false;
+    for(const [la,lo] of pts){if(Math.abs(la-lat)>pad||Math.abs(lo-lon)>pad*2)continue;if(hav([la,lo],[lat,lon])<=radius){ok=true;break}}
+    if(!ok)continue;
+    const tags={amenity:"charging_station",operator:op,name:(!name||name===op)&&addr?addr:name,capacity:String(n),"charging_station:output":kw+" kW"};
+    if(hours)tags.opening_hours=hours==="247"?"24/7":hours;
+    for(const [k,v] of Object.entries(plugs||{})){tags["socket:"+k]="1";if(v)tags["socket:"+k+":output"]=v+" kW";}
+    out.push({type:"bnetza",id:lat+","+lon,lat,lon,tags});
+  }
+  return out;
+}
+async function loadStations(){
+  if(!S.route)return;
+  const ops=[...S.ops];
+  setStatus((ops.length?`Suche Ladestationen von ${ops.length<=3?ops.join(", "):ops.length+" Anbietern"}`:"Suche alle Ladestationen")+" entlang der Route …");
+  const pts=S.samples.map(s=>`${s.p[0].toFixed(5)},${s.p[1].toFixed(5)}`).join(",");
+  const around=`(around:${S.radius*1000},${pts})`;
+  let body;
+  if(ops.length){
+    const pat=ops.map(opPattern).join("|").replace(/"/g,".");
+    body=["operator","brand","network"].map(k=>`nwr["amenity"="charging_station"]["${k}"~"${pat}",i]${around};`).join("");
+  }else body=`nwr["amenity"="charging_station"]${around};`;
+  const q=`[out:json][timeout:50];(${body});out center tags;`;
+  let data=null;
+  try{
+    const pat=ops.length?ops.map(opPattern).join("|"):"";
+    const els=await registerStations(S.samples.map(s=>s.p),S.radius,pat);
+    if(els.length)data={elements:els};
+  }catch(e){}
+  if(!data){
+    const ctrls=OVERPASS.map(()=>new AbortController());
+    const timer=setTimeout(()=>ctrls.forEach(c=>c.abort()),45000);
+    try{
+      data=await Promise.any(OVERPASS.map(async(ep,i)=>{
+        const r=await fetch(ep,{method:"POST",body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"},signal:ctrls[i].signal});
+        if(!r.ok)throw new Error(r.status);
+        const j=await r.json(); if(!Array.isArray(j.elements))throw new Error("leer");
+        return j;
+      }));
+    }catch(e){data=null}
+    clearTimeout(timer); ctrls.forEach(c=>c.abort());
+  }
+  if(!data){setStatus("Die Ladesäulen-Datenbank antwortet gerade nicht. Tippe gleich noch einmal auf „Suchen“.",true);return}
+  S.loadedOps=ops.length?ops:null;
+  S.stations=data.elements.map(parseStation).filter(Boolean).sort((a,b)=>a.km-b.km);
+  setStatus("");
+  renderFilters();renderList();
+  $("filters").open=false;
+  if(window.innerWidth<900)$("results").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function reloadIfNeeded(){
+  if(!S.route||S.loadedOps===null)return;
+  if(!S.ops.length||S.ops.some(o=>!S.loadedOps.includes(o)))loadStations();
+}
+function num(v){if(!v)return 0;const m=String(v).replace(",",".").match(/[\d.]+/);if(!m)return 0;let n=parseFloat(m[0]);
+  if(/\bw\b/i.test(v)&&!/kw/i.test(v)&&n>1000)n/=1000;return n||0}
+function parseStation(el){
+  const t=el.tags||{};
+  const lat=el.lat??el.center?.lat, lon=el.lon??el.center?.lon; if(lat==null)return null;
+  if(["private","no"].includes(t.access))return null;
+  if(t.motorcar==="no")return null;
+  const sockets=new Set();let maxKw=0;
+  for(const [k,v] of Object.entries(t)){
+    const m=k.match(/^socket:([a-z0-9_]+)(?::output)?$/);
+    if(m&&!k.endsWith(":output")&&v!=="no"&&v!=="0")sockets.add(m[1]);
+    if(/(^|:)output$/.test(k)||k==="charging_station:output")maxKw=Math.max(maxKw,...String(v).split(";").map(num));
+  }
+  if(t.bicycle==="yes"&&t.motorcar!=="yes"&&![...sockets].some(s=>/type2|chademo|tesla|ccs/.test(s)))return null;
+  const plugs=PLUGS.filter(p=>p.keys.some(k=>sockets.has(k))).map(p=>p.id);
+  const op=brandOf((t.brand||t.operator||t.network||"").split(";")[0]);
+  let best=null,bd=1e9;
+  for(const s of S.samples){const d=hav([lat,lon],s.p);if(d<bd){bd=d;best=s}}
+  return {id:el.type+el.id,lat,lon,name:t.name||op||"Ladestation",op,plugs,kw:maxKw,
+    cap:t.capacity?parseInt(t.capacity):null,fee:t.fee,hours:t["opening_hours"],km:best?best.km:0,off:bd};
+}
+function passes(s){
+  if(S.plugs.length&&!S.plugs.some(p=>s.plugs.includes(p)))return false;
+  if(S.power&&s.kw<S.power)return false;
+  if(S.ops.length&&!S.ops.includes(s.op))return false;
+  return true;
+}
+
+const PLUG_LABEL=Object.fromEntries(PLUGS.map(p=>[p.id,p.label]));
+function renderList(){
+  if(!S.route)return;
+  $("results").hidden=false;
+  const vis=S.stations.filter(passes);
+  const hiddenUnknown=S.power?S.stations.filter(s=>!s.kw&&(!S.plugs.length||S.plugs.some(p=>s.plugs.includes(p)))).length:0;
+  $("resTitle").textContent=vis.length===1?"1 Ladestation":`${vis.length} Ladestationen`;
+  $("resCount").textContent=S.ops.length?`nur ${S.ops.length===1?S.ops[0]:S.ops.length+" Anbieter"}`:`von ${S.stations.length} auf der Route`;
+  const list=$("list");
+  if(!vis.length){
+    list.innerHTML=`<li class="empty">${S.stations.length?(S.ops.length?"Keine Station der gewählten Anbieter auf dieser Route. Wähle weitere Anbieter oder erhöhe den Umweg.":"Keine Station passt zu deinen Filtern. Lockere Stecker, Leistung oder Anbieter."):"Keine Ladestationen in diesem Umkreis gefunden. Erhöhe den Umweg in den Filtern."}</li>`;
+  }else{
+    list.innerHTML=vis.map(s=>{
+      const sel=S.selected.has(s.id);
+      const meta=[s.plugs.map(p=>PLUG_LABEL[p]).join(", "),s.cap?`${s.cap} Ladepunkte`:"",s.off>=0.3?`${s.off.toFixed(1)} km neben der Route`:"direkt an der Route"].filter(Boolean).join(", ");
+      return `<li class="st${sel?" sel":""}${S.focus===s.id?" focus":""}" data-id="${s.id}">
+        <div class="km"><b>${Math.round(s.km)}</b><small>km</small></div>
+        <h3>${esc(s.name)}</h3>
+        <div class="meta"><span class="pw">${s.kw?Math.round(s.kw)+" kW":"kW ?"}</span>${esc(s.op&&s.op!==s.name?s.op:"")}</div>
+        <div class="meta">${esc(meta)}</div>
+        <div class="acts" style="grid-column:2">
+          <button type="button" class="add" data-act="toggle">${sel?"✓ Stopp":"+ Als Stopp"}</button>
+          <a href="${gmapsSingle(s)}" target="_blank" rel="noopener">Nur hierhin</a>
+        </div></li>`}).join("");
+  }
+  if(hiddenUnknown)list.insertAdjacentHTML("beforeend",`<li class="empty">${hiddenUnknown} weitere Stationen ohne Leistungsangabe sind ausgeblendet.</li>`);
+  stLayer.clearLayers();markers.clear();
+  const order=selectedStops().map(s=>s.id);
+  vis.forEach(s=>{
+    const n=order.indexOf(s.id);
+    const cls=n>=0?"sel":s.kw>=150?"fast":s.kw>=50?"mid":"slow";
+    const m=L.marker([s.lat,s.lon],{icon:L.divIcon({className:"",html:`<div class="pin ${cls}">${n>=0?n+1:""}</div>`,iconSize:n>=0?[28,28]:[22,22]}),zIndexOffset:n>=0?1000:0})
+      .addTo(stLayer).on("click",()=>focusStation(s.id,true));
+    m.bindTooltip(`${esc(s.name)} (${s.kw?Math.round(s.kw)+" kW":"kW ?"})`);
+    markers.set(s.id,m);
+  });
+  renderStops();
+}
+$("list").addEventListener("click",e=>{
+  const li=e.target.closest(".st");if(!li)return;
+  const id=li.dataset.id;
+  if(e.target.closest("[data-act=toggle]")){S.selected.has(id)?S.selected.delete(id):S.selected.add(id);renderList();return}
+  if(e.target.closest("a"))return;
+  focusStation(id,false);
+});
+function focusStation(id,fromMap){
+  S.focus=id;const s=S.stations.find(x=>x.id===id);if(!s)return;
+  if(!fromMap)map.setView([s.lat,s.lon],Math.max(map.getZoom(),13));
+  renderList();
+  const li=document.querySelector(`.st[data-id="${CSS.escape(id)}"]`);
+  if(li&&fromMap)li.scrollIntoView({behavior:"smooth",block:"center"});
+}
+function selectedStops(){return S.stations.filter(s=>S.selected.has(s.id)).sort((a,b)=>a.km-b.km)}
+
+function ll(p){return `${p.lat.toFixed(6)},${p.lon.toFixed(6)}`}
+function gmapsSingle(s){return `https://www.google.com/maps/dir/?api=1&destination=${ll(s)}&travelmode=driving`}
+function renderStops(){
+  const stops=selectedStops();const box=$("stopsBox");
+  if(!stops.length){box.hidden=true;return}
+  box.hidden=false;
+  $("stopsList").innerHTML=stops.map(s=>`<li>${esc(s.name)} <span class="meta">(km ${Math.round(s.km)}, ${s.kw?Math.round(s.kw)+" kW":"kW ?"})</span></li>`).join("")+`<li>${esc(S.to.label)} <span class="meta">(Ziel)</span></li>`;
+  let url=`https://www.google.com/maps/dir/?api=1&destination=${ll(S.to)}&travelmode=driving&waypoints=${stops.map(ll).join("%7C")}`;
+  if(S.from&&!S.from.here)url+=`&origin=${ll(S.from)}`;
+  $("gmapsBtn").href=url;
+  $("appleBtn").href=`https://maps.apple.com/?daddr=${ll(stops[0])}&dirflg=d`;
+  $("wpHint").textContent=stops.length>3?"Hinweis: Google Maps übernimmt am Handy oft nur 3 Zwischenstopps. Wähle besser höchstens 3 aus.":"";
+}
+
+renderFilters();
+
+let hereMarker=null, accCircle=null, watchId=null, live=false, lastPos=null, firstFix=true;
+function setLive(on){
+  live=on;const b=$("locBtn");b.classList.toggle("live",on);b.setAttribute("aria-pressed",String(on));
+  if(on){$("from").value="Mein Standort (live)";if(lastPos)S.from=lastPos;}
+}
+function beacon(){}
+let gotFix=false;
+function startLive(){
+  beacon("start",{geo:!!navigator.geolocation});
+  setTimeout(()=>{if(!gotFix)beacon("nofix25s")},25000);
+  if(!navigator.geolocation){setStatus("Standort wird von diesem Browser nicht unterstützt.",true);return}
+  if(watchId!==null)navigator.geolocation.clearWatch(watchId);
+  firstFix=true;setLive(true);setStatus("Suche deinen Standort …");
+  watchId=navigator.geolocation.watchPosition(p=>{
+    if(!gotFix)beacon("fix",{acc:Math.round(p.coords.accuracy)});gotFix=true;
+    lastPos={lat:p.coords.latitude,lon:p.coords.longitude,label:"Mein Standort",here:true};
+    if(live)S.from=lastPos;
+    const ll=[lastPos.lat,lastPos.lon];
+    if(!hereMarker){
+      accCircle=L.circle(ll,{radius:p.coords.accuracy,color:"#1F4E9E",weight:1,fillOpacity:.12}).addTo(map);
+      hereMarker=L.circleMarker(ll,{radius:9,color:"#fff",weight:3,fillColor:"#1F4E9E",fillOpacity:1}).addTo(map).bindTooltip("Du bist hier");
+    }else{hereMarker.setLatLng(ll);accCircle.setLatLng(ll).setRadius(p.coords.accuracy);}
+    if(firstFix){firstFix=false;if(!S.route)map.setView(ll,13);setStatus("Live-Standort aktiv. Gib jetzt dein Ziel ein.");}
+  },err=>{
+    beacon("err",{code:err.code,msg:err.message});
+    if(err.code===1){
+      setLive(false);$("from").value="";if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;
+      setStatus("Standortzugriff ist blockiert. Erlaube ihn unter Einstellungen › Datenschutz › Ortungsdienste › Safari-Websites („Beim Verwenden“), dann auf 📍 tippen.",true);
+    }else if(!lastPos)setStatus("Standort wird noch gesucht … Geh am besten kurz ins Freie oder tippe einen Startort ein.");
+  },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+}
+startLive();
+})();
+</script>
+</body>
+</html>
