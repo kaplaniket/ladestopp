@@ -334,6 +334,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
       <li><button type="button" id="mNew"><span class="i">✚</span><span>Neue Route<small>Ziel und Stopps leeren</small></span></button></li>
       <li><button type="button" id="mInstall"><span class="i">📲</span><span>Als App installieren<small>Anleitung für iPhone und Android</small></span></button></li>
       <li><button type="button" id="mUpdate"><span class="i">⟳</span><span>Nach Update suchen<small id="mVer"></small></span></button></li>
+      <li id="mAdminLi" hidden><a href="zugang.html"><span class="i">👥</span><span>Zugänge verwalten<small>Personen freischalten oder entfernen</small></span></a></li>
       <li><a href="rechtliches.html"><span class="i">§</span><span>Impressum, Datenschutz, Lizenzen</span></a></li>
       <li><button type="button" id="mLock"><span class="i">🔒</span><span>Abmelden<small>E-Mail und Passwort beim nächsten Öffnen wieder abfragen</small></span></button></li>
     </ul>
@@ -354,7 +355,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 (function(){
 "use strict";
 /* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
-const APP_VERSION="1.3.0";
+const APP_VERSION="1.4.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -854,6 +855,7 @@ $("tbGo").addEventListener("click",()=>{
   run();
 });
 function syncMenu(){
+  try{$("mAdminLi").hidden=!localStorage.getItem("ladestopp-admin:token")}catch(e){}
   $("mLiveT").classList.toggle("on",!!live);
   const t=store.get("theme","auto");$("mDarkS").textContent={auto:"Wie Handy",light:"Hell",dark:"Dunkel"}[t];
   $("mVer").textContent="Installiert: Version "+APP_VERSION;
