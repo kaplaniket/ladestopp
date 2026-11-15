@@ -18,10 +18,16 @@
 <meta name="author" content="Tekin Kaplan">
 <meta name="copyright" content="© 2026 Tekin Kaplan">
 <meta name="application-name" content="Ladestopp">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <style>
+@font-face{font-family:"Barlow";font-style:normal;font-weight:400;font-display:swap;src:url(vendor/fonts/barlow-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-style:normal;font-weight:500;font-display:swap;src:url(vendor/fonts/barlow-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-style:normal;font-weight:600;font-display:swap;src:url(vendor/fonts/barlow-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Semi Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(vendor/fonts/barlow-semi-condensed-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Semi Condensed";font-style:normal;font-weight:700;font-display:swap;src:url(vendor/fonts/barlow-semi-condensed-latin-700-normal.woff2) format("woff2")}
+.warn{margin-top:8px;font-size:.85rem;color:var(--muted)}
+.legal a{color:inherit}
 :root{
   --bg:#EEF1F5; --surface:#FFFFFF; --ink:#13233F; --muted:#5B6B85; --line:#D5DCE6;
   --sign:#1F4E9E; --sign-ink:#FFFFFF; --amber:#F0B400; --amber-ink:#1B1600; --danger:#B3261E;
@@ -217,6 +223,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
         <a id="appleBtn" class="secondary" target="_blank" rel="noopener">Nächster Stopp in Apple Karten</a>
       </div>
       <p class="hint" id="wpHint"></p>
+      <p class="warn">⚠︎ Ziel und Stopps bitte vor der Fahrt festlegen. Während der Fahrt darf das Handy nicht bedient werden (§ 23 Abs. 1a StVO).</p>
     </section>
 
     <div id="results" hidden>
@@ -224,7 +231,8 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
       <ul class="list" id="list"></ul>
     </div>
 
-    <p class="foot">Ladesäulen: Ladesäulenregister der Bundesnetzagentur (Deutschland), sonst OpenStreetMap. Karte und Orte: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende, Route: OSRM. Angaben zu Leistung und Anbieter können unvollständig sein.</p>
+    <p class="foot legal">Ladesäulen: <a href="https://www.bundesnetzagentur.de/ladeinfrastruktur" target="_blank" rel="noopener">Ladesäulenregister der Bundesnetzagentur</a>, Lizenz <a href="https://creativecommons.org/licenses/by/4.0/deed.de" target="_blank" rel="noopener">CC BY 4.0</a>, für die App zusammengefasst und aufbereitet. Karte, Orte und Ladesäulen außerhalb Deutschlands: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende (ODbL). Ortssuche: <a href="https://photon.komoot.io" target="_blank" rel="noopener">Photon</a> (komoot). Route: <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">FOSSGIS-Routingserver</a> (OSRM). Fehler in der Karte? <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Hier melden</a>.<br>Alle Angaben ohne Gewähr. Leistung, Anbieter und Verfügbarkeit können abweichen. Bitte vor Ort prüfen.</p>
+    <p class="foot legal"><a href="rechtliches.html#impressum">Impressum</a> · <a href="rechtliches.html#datenschutz">Datenschutz</a> · <a href="rechtliches.html#lizenzen">Lizenzen</a></p>
     <p class="sig"><span><b>Ladestopp</b> Version <span id="appVer"></span></span><span>© 2026 Tekin Kaplan · Alle Rechte vorbehalten</span></p>
   </main>
 </div>
@@ -268,12 +276,12 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
     <div class="sheetbar"><button type="button" class="primary" style="margin-top:0" id="opDone">Fertig</button></div>
   </div>
 </dialog>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="vendor/leaflet/leaflet.js"></script>
 <script>
 (function(){
 "use strict";
 /* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
-const APP_VERSION="1.1.0";
+const APP_VERSION="1.2.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -315,7 +323,7 @@ const dark = matchMedia("(prefers-color-scheme: dark)").matches;
 const map = L.map("map",{zoomControl:false}).setView([51.16,10.45],6);
 L.control.zoom({position:"topright"}).addTo(map);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {maxZoom:19,className:dark?"tiles-dark":"",attribution:"© OpenStreetMap"}).addTo(map);
+  {maxZoom:19,className:dark?"tiles-dark":"",attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende'}).addTo(map);
 const routeLayer = L.layerGroup().addTo(map);
 const stLayer = L.layerGroup().addTo(map);
 const markers = new Map();
@@ -453,7 +461,7 @@ async function run(){
     if(!to)throw new Error("Ziel nicht gefunden. Prüfe die Schreibweise.");
     S.from=from;S.to=to;
     setStatus("Berechne Route …");
-    const r=await fetchT(`https://router.project-osrm.org/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=full&geometries=geojson`,{},25000);
+    const r=await fetchT(`https://routing.openstreetmap.de/routed-car/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=full&geometries=geojson`,{},25000);
     const j=await r.json();
     if(j.code!=="Ok"||!j.routes?.length)throw new Error("Keine Route gefunden.");
     const rt=j.routes[0];
@@ -475,8 +483,7 @@ async function run(){
   finally{btn.disabled=false}
 }
 
-const OVERPASS=["https://overpass-api.de/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  "https://overpass.private.coffee/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
+const OVERPASS=["https://overpass-api.de/api/interpreter"];
 function opPattern(name){
   const b=BRANDS.find(x=>x[0]===name);
   if(b)return b[1].source.replace(/\\b/g,"").replace(/\\\./g,"[.]").replace(/\\s/g," ").replace(/\^/g,"");
