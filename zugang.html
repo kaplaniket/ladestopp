@@ -7,9 +7,8 @@
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#1F4E9E">
-<title>Ladestopp – Zugang vergeben</title>
+<title>Ladestopp – Passwörter</title>
 <link rel="icon" href="icon-180.png">
-<link rel="apple-touch-icon" href="icon-180.png">
 <style>
 @font-face{font-family:"Barlow";font-weight:400;font-display:swap;src:url(vendor/fonts/barlow-latin-400-normal.woff2) format("woff2")}
 @font-face{font-family:"Barlow";font-weight:600;font-display:swap;src:url(vendor/fonts/barlow-latin-600-normal.woff2) format("woff2")}
@@ -23,180 +22,108 @@ main{max-width:520px;margin:0 auto}
 .plate h1{margin:0;font:700 1.5rem "Barlow Semi Condensed",sans-serif}
 .plate p{margin:2px 0 0;opacity:.85}
 section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px}
-section[hidden],[hidden]{display:none!important}
+[hidden]{display:none!important}
 h2{margin:0 0 8px;font:700 1.25rem "Barlow Semi Condensed",sans-serif}
 label{display:block;color:var(--muted);font-size:.9rem;margin:10px 0 4px}
 input{width:100%;padding:13px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
 button,a.btn{display:block;width:100%;margin-top:12px;padding:15px;border:0;border-radius:10px;background:var(--sign);color:#fff;font:600 1.05rem "Barlow",sans-serif;text-align:center;text-decoration:none;cursor:pointer}
+button:disabled{opacity:.5}
 .sec{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
 .amber{background:var(--amber);color:var(--amber-ink)}
-.msg{margin:10px 0 0;min-height:1.2em}.msg.err{color:var(--danger)}.msg.ok{color:var(--ok)}
+.msg{margin:10px 0 0;min-height:1.2em}.msg.err{color:var(--danger)}
 .muted{color:var(--muted);font-size:.95rem}
+.pw{font:700 1.7rem "Barlow Semi Condensed",sans-serif;text-align:center;background:var(--bg);border-radius:10px;padding:14px;margin:8px 0;user-select:all;word-break:break-all}
 .done{border:2px solid var(--amber)}
-.req{border-top:1px solid var(--line);padding:10px 0}.req:first-child{border-top:0}
-.req b{display:block}.req small{color:var(--muted)}
-.req .bt{display:flex;gap:8px}.req .bt button{margin-top:8px;padding:11px}
-details summary{cursor:pointer;color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding:10px 0}
+.row:first-child{border-top:0}
+.row div{flex:1;min-width:0}.row b{display:block}.row small{color:var(--muted)}
+.row button{width:auto;margin:0;padding:9px 12px;font-size:.9rem;color:var(--danger)}
 </style>
 </head>
 <body>
 <main>
-<div class="plate"><h1>Zugang vergeben</h1><p>Ladestopp · nur für Tekin</p></div>
+<div class="plate"><h1>Passwörter</h1><p>Ladestopp · nur für Tekin</p></div>
 
-<section id="nokey" hidden>
-  <h2>Noch nicht eingerichtet</h2>
-  <p class="muted">Auf diesem Gerät bzw. in diesem Browser fehlt noch dein Einrichtungslink. Kopiere ihn aus dem Chat mit Claude (er beginnt mit <b>https://kaplaniket.github.io/ladestopp/zugang.html#k=</b>) und füge ihn hier ein. Das ist pro Gerät nur einmal nötig.</p>
-  <input id="keyIn" autocapitalize="off" spellcheck="false" autocomplete="off" placeholder="Einrichtungslink einfügen">
-  <button id="keyBtn" class="amber">Einrichten</button>
-  <p class="msg" id="keyMsg"></p>
+<section id="nochef" hidden>
+  <h2>Bitte zuerst anmelden</h2>
+  <p class="muted">Öffne die App und gib dort dein Chef-Passwort ein. Danach kommst du über ☰ Mehr › „Passwörter verwalten“ hierher.</p>
+  <a class="btn" href="./">Zur App</a>
 </section>
 
-<section id="welcome" class="done" hidden>
-  <h2>Eingerichtet ✓</h2>
-  <p class="muted">Ab jetzt reicht: Wenn dir jemand eine Zugangs-Anfrage schickt, tippst du in der Mail auf den Link. Dann landest du hier und tippst auf „Zugang senden“.</p>
-  <button id="selfBtn" class="amber">Mich selbst freischalten und App öffnen</button>
-</section>
-
-<section id="inbox" hidden>
-  <h2>Neue Anfragen <span class="muted" id="inCnt"></span></h2>
-  <div id="inList"></div>
-  <p class="msg" id="inMsg"></p>
-</section>
-
-<section id="form" hidden>
-  <h2>Wer bekommt Zugang?</h2>
+<section id="neu" hidden>
+  <h2>Neues Passwort erstellen</h2>
   <label for="n">Name</label>
   <input id="n" placeholder="z. B. Max Mustermann" autocomplete="off">
   <label for="m">E-Mail</label>
   <input id="m" type="email" autocapitalize="off" spellcheck="false" placeholder="name@beispiel.de" autocomplete="off">
-  <button id="go" class="amber">✉︎ Zugang senden</button>
+  <button id="go" class="amber">Passwort erstellen</button>
   <p class="msg" id="msg"></p>
 </section>
 
-<section id="sent" class="done" hidden>
-  <h2>Fast fertig</h2>
-  <p class="muted" id="sentText"></p>
-  <a class="btn" id="mailBtn" href="#">✉︎ Antwort-Mail nochmal öffnen</a>
-  <button id="shareBtn" class="sec">Stattdessen teilen (WhatsApp …)</button>
-  <button id="againBtn" class="sec">Nächste Person</button>
+<section id="fertig" class="done" hidden>
+  <h2 id="fT">Passwort</h2>
+  <div class="pw" id="pw"></div>
+  <a class="btn amber" id="mailBtn" href="#">✉︎ Per E-Mail schicken</a>
+  <button id="shareBtn" class="sec">Teilen (WhatsApp …)</button>
+  <button id="copyBtn" class="sec">Kopieren</button>
 </section>
 
-<section id="extra" hidden>
-  <details>
-    <summary>Zugang beenden</summary>
-    <p class="muted">E-Mail eintragen, „Sperrcode erzeugen“ tippen und den Code an Claude schicken. Die Person ist dann beim nächsten Öffnen abgemeldet.</p>
-    <input id="rm" type="email" autocapitalize="off" spellcheck="false" placeholder="name@beispiel.de">
-    <button id="rmBtn" class="sec">Sperrcode erzeugen und kopieren</button>
-    <p class="msg" id="rmMsg" style="word-break:break-all"></p>
-  </details>
-  <p class="muted" style="margin-top:12px"><a href="./" style="color:inherit">‹ Zur App</a></p>
+<section id="liste" hidden>
+  <h2>Wer hat ein Passwort <span class="muted" id="cnt"></span></h2>
+  <div id="rows"></div>
+  <p class="msg" id="lMsg"></p>
+  <p class="muted" style="margin-top:10px"><a href="./" style="color:inherit">‹ Zur App</a></p>
 </section>
 </main>
 <script>
 (function(){
 "use strict";
-const KEY="ladestopp-admin:key";
+const API="https://tekin.tail62f658.ts.net/ladestopp/api/z/";
 const $=id=>document.getElementById(id);
-const te=new TextEncoder();
-const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
-function b64uDec(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
-function b64uBytes(b){return btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
-function b64uEnc(t){return b64uBytes(te.encode(t))}
-function dec(t){try{return new TextDecoder().decode(b64uDec(t))}catch(e){return ""}}
-function msg(id,t,cls){const e=$(id);e.textContent=t||"";e.className="msg"+(cls?" "+cls:"")}
-async function shaHex(t){const b=await crypto.subtle.digest("SHA-256",te.encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
-
-const h=new URLSearchParams(location.hash.slice(1));
-let fresh=false;
-if(h.get("k")){ls.set(KEY,h.get("k"));fresh=true;}
-const pre={n:h.get("name")?dec(h.get("name")):"",m:h.get("neu")?dec(h.get("neu")):""};
-if(location.hash)history.replaceState(null,"",location.pathname);
-
-const PI_API="https://tekin.tail62f658.ts.net/ladestopp/api/";
-let current=null;
-async function adminHdr(){return {"X-Ladestopp-Admin":await shaHex("ladestopp-admin:"+ls.get(KEY))}}
-async function loadInbox(){
-  try{
-    const r=await fetch(PI_API+"anfragen",{headers:await adminHdr(),cache:"no-store"});
-    if(!r.ok)throw new Error(r.status);
-    const list=(await r.json()).anfragen||[];
-    $("inbox").hidden=false;$("inCnt").textContent=list.length?`(${list.length})`:"";
-    const box=$("inList");box.innerHTML="";
-    if(!list.length){box.innerHTML='<p class="muted">Keine offenen Anfragen.</p>';return}
-    for(const a of list.slice().reverse()){
-      const d=document.createElement("div");d.className="req";
-      const t=document.createElement("div");t.innerHTML="<b></b><small></small>";
-      t.querySelector("b").textContent=a.name;t.querySelector("small").textContent=a.mail+" · "+a.zeit;
-      const bt=document.createElement("div");bt.className="bt";
-      const ok=document.createElement("button");ok.className="amber";ok.textContent="✉︎ Zugang senden";
-      ok.onclick=()=>{current=a.id;$("n").value=a.name;$("m").value=a.mail;send()};
-      const no=document.createElement("button");no.className="sec";no.textContent="Ablehnen";
-      no.onclick=async()=>{if(confirm(a.name+" ablehnen? Die Anfrage wird gelöscht.")){await done(a.id);}};
-      bt.append(ok,no);d.append(t,bt);box.append(d);
-    }
-  }catch(e){$("inbox").hidden=false;$("inList").innerHTML='<p class="muted">Anfragen konnten nicht geladen werden (Pi nicht erreichbar).</p>'}
+let acc=null;try{acc=JSON.parse(localStorage.getItem("ladestopp:acc"))}catch(e){}
+function msg(id,t,err){const e=$(id);e.textContent=t||"";e.className="msg"+(err?" err":"")}
+async function call(what,body){
+  const r=await fetch(API+what,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:acc.token,...body})});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"Pi nicht erreichbar");return j;
 }
-async function done(id){try{await fetch(PI_API+"anfrage-erledigt",{method:"POST",headers:{...await adminHdr(),"Content-Type":"application/json"},body:JSON.stringify({id})})}catch(e){}loadInbox()}
-async function signer(){return crypto.subtle.importKey("pkcs8",b64uDec(ls.get(KEY)),{name:"ECDSA",namedCurve:"P-256"},false,["sign"])}
-async function makeCode(mail){const sig=await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},await signer(),te.encode("ladestopp:v1:"+mail));return b64uEnc(mail)+"."+b64uBytes(sig)}
-const appUrl=new URL("./",location.href).href;
-
-function letter(name,link){
-  const first=(name||"").trim().split(/\s+/)[0];
-  return `Hallo${first?" "+first:""},\n\nhier ist dein persönlicher Zugang zu Ladestopp. Tippe einfach auf diesen Link, dann bist du angemeldet:\n\n${link}\n\nTipp für das iPhone: Den Link in Safari öffnen und danach über Teilen › „Zum Home-Bildschirm“ als App speichern. Falls die App dort noch einmal nach dem Zugang fragt, kopiere diesen Link und füge ihn unter „Link funktioniert nicht? Hier einfügen“ ein.\n\nBitte gib den Link nicht weiter, er ist nur für dich.\n\nViele Grüße\nTekin`;
-}
+const app=new URL("./",location.href).href;
 let last=null;
-async function send(){
-  const name=$("n").value.trim(),mail=$("m").value.trim().toLowerCase();
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){$("m").focus();return msg("msg","Bitte eine gültige E-Mail eintragen.","err")}
+async function liste(){
   try{
-    const link=appUrl+"#zugang="+await makeCode(mail);
-    const text=letter(name,link);
-    last={name,mail,link,text};
-    const href=`mailto:${mail}?subject=${encodeURIComponent("Dein Zugang zu Ladestopp")}&body=${encodeURIComponent(text)}`;
-    $("mailBtn").href=href;
-    $("sentText").textContent=`Deine Antwort an ${name||mail} ist vorbereitet. Schick sie in deinem Mailprogramm ab, fertig.`;
+    const j=await call("liste",{});const rows=$("rows");rows.innerHTML="";
+    $("cnt").textContent=j.nutzer.length?`(${j.nutzer.length})`:"";
+    if(!j.nutzer.length){rows.innerHTML='<p class="muted">Noch niemand.</p>';return}
+    for(const u of j.nutzer.slice().reverse()){
+      const r=document.createElement("div");r.className="row";
+      const t=document.createElement("div");t.innerHTML="<b></b><small></small>";t.querySelector("b").textContent=u.name;t.querySelector("small").textContent=u.mail+" · seit "+u.seit;
+      const b=document.createElement("button");b.className="sec";b.textContent="Löschen";
+      b.onclick=async()=>{if(!confirm(u.name+" löschen? Das Passwort funktioniert dann nicht mehr."))return;try{await call("loeschen",{mail:u.mail});liste()}catch(e){msg("lMsg",e.message,1)}};
+      r.append(t,b);rows.append(r);
+    }
+  }catch(e){msg("lMsg",e.message,1)}
+}
+$("go").onclick=async()=>{
+  const name=$("n").value.trim(),mail=$("m").value.trim().toLowerCase();
+  if(!name){$("n").focus();return msg("msg","Bitte einen Namen eintragen.",1)}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){$("m").focus();return msg("msg","Bitte eine gültige E-Mail eintragen.",1)}
+  $("go").disabled=true;msg("msg","");
+  try{
+    const j=await call("neu",{name,mail});
+    const first=name.split(/\s+/)[0];
+    const text=`Hallo ${first},\n\nhier ist dein Passwort für Ladestopp:\n\n${j.pw}\n\nSo geht's: Öffne ${app} in Safari oder Chrome, gib das Passwort ein, fertig.\nTipp: Über Teilen › „Zum Home-Bildschirm“ legst du die App als Icon ab.\n\nViele Grüße\nTekin`;
+    last=text;
+    $("fT").textContent="Passwort für "+name;$("pw").textContent=j.pw;
+    $("mailBtn").href=`mailto:${mail}?subject=${encodeURIComponent("Dein Passwort für Ladestopp")}&body=${encodeURIComponent(text)}`;
     $("shareBtn").hidden=!navigator.share;
-    $("form").hidden=true;$("welcome").hidden=true;$("sent").hidden=false;
-    if(current){const id=current;current=null;done(id);}
-    location.href=href;
-  }catch(e){msg("msg","Das hat nicht geklappt. Öffne die Seite in Safari.","err")}
-}
-$("go").onclick=send;
-$("shareBtn").onclick=()=>last&&navigator.share({title:"Dein Zugang zu Ladestopp",text:last.text}).catch(()=>{});
-$("againBtn").onclick=()=>{loadInbox();$("n").value="";$("m").value="";msg("msg","");$("sent").hidden=true;$("form").hidden=false;$("n").focus()};
-$("selfBtn").onclick=async()=>{
-  const code=await makeCode("inhaber@ladestopp");
-  location.href=appUrl+"#zugang="+code;
+    $("fertig").hidden=false;$("fertig").scrollIntoView({behavior:"smooth"});
+    $("n").value="";$("m").value="";liste();
+  }catch(e){msg("msg",e.message,1)}
+  finally{$("go").disabled=false}
 };
-$("rmBtn").onclick=async()=>{
-  const m=$("rm").value.trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){$("rm").focus();return}
-  const c=await shaHex("ladestopp:"+m);
-  try{await navigator.clipboard.writeText("Sperrcode Ladestopp: "+c);msg("rmMsg","Kopiert ✓ Jetzt an Claude schicken: "+c,"ok")}catch(e){msg("rmMsg","Sperrcode: "+c)}
-};
-
-$("keyBtn").onclick=async()=>{
-  const m=$("keyIn").value.match(/#k=([A-Za-z0-9_-]{100,})/)||$("keyIn").value.trim().match(/^([A-Za-z0-9_-]{100,})$/);
-  if(!m)return msg("keyMsg","Das ist nicht der Einrichtungslink. Kopiere den ganzen Link aus dem Chat.","err");
-  ls.set(KEY,m[1]);
-  try{await signer()}catch(e){ls.set(KEY,null);return msg("keyMsg","Der Link ist unvollständig. Bitte den ganzen Link kopieren.","err")}
-  $("nokey").hidden=true;show(true);
-};
-function show(isFresh){
-  loadInbox();
-  if(isFresh)$("welcome").hidden=false;
-  $("form").hidden=false;$("extra").hidden=false;
-  $("n").value=pre.n;$("m").value=pre.m;
-  if(pre.m)msg("msg",`Anfrage von ${pre.n||pre.m}. Tippe auf „Zugang senden“.`,"ok");
-}
-if(!ls.get(KEY)){$("nokey").hidden=false}
-else{show(fresh)}
-if(false){
-  if(fresh)$("welcome").hidden=false;
-  $("form").hidden=false;$("extra").hidden=false;
-  $("n").value=pre.n;$("m").value=pre.m;
-  if(pre.m)msg("msg",`Anfrage von ${pre.n||pre.m}. Tippe auf „Zugang senden“.`,"ok");
-}
+$("shareBtn").onclick=()=>last&&navigator.share({title:"Dein Passwort für Ladestopp",text:last}).catch(()=>{});
+$("copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText($("pw").textContent);$("copyBtn").textContent="Kopiert ✓"}catch(e){}};
+if(!acc||!acc.chef){$("nochef").hidden=false}
+else{$("neu").hidden=false;$("liste").hidden=false;liste();}
 })();
 </script>
 </body>

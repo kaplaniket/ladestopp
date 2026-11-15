@@ -196,21 +196,15 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 <body>
 <div class="lock" id="lock" hidden>
   <div class="lockcard">
-    <div class="plate"><h1>Ladestopp</h1><p>Privater Zugang</p></div>
-    <p style="margin:0 0 6px"><b>Du hast schon einen Zugangslink per E-Mail?</b><br>Dann tippe ihn in der E-Mail einfach an.</p>
-    <details id="codeBox" style="margin-top:6px">
-      <summary class="hint" style="cursor:pointer">Link funktioniert nicht? Hier einfügen</summary>
-      <input id="codeIn" class="input" style="margin-top:8px" placeholder="Zugangslink aus der E-Mail einfügen" autocapitalize="off" spellcheck="false" autocomplete="off">
-      <button class="primary" type="button" id="codeBtn" style="margin-top:8px">Öffnen</button>
-    </details>
-    <p class="err" id="lockErr" role="alert"></p>
+    <div class="plate"><h1>Ladestopp</h1><p>Bitte dein Passwort eingeben</p></div>
+    <form id="lockForm">
+      <input id="lockPw" class="input" type="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Passwort" enterkeyhint="go" style="font-size:1.15rem">
+      <p class="err" id="lockErr" role="alert"></p>
+      <button class="primary" type="submit" id="lockBtn" style="margin-top:4px">Öffnen</button>
+    </form>
     <hr>
-    <h2 style="font-size:1.1rem;margin:0 0 4px">Noch keinen Zugang?</h2>
-    <p class="hint" style="margin:0 0 8px">Frag ihn bei Tekin Kaplan an. Den Zugangslink bekommst du dann per E-Mail.</p>
-    <input id="reqName" class="input" placeholder="Dein Name" autocomplete="name">
-    <input id="reqMail" class="input" style="margin-top:8px" type="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" autocapitalize="off">
-    <a class="opbtn" id="reqBtn" style="display:block;text-align:center;text-decoration:none" href="#">✉︎ Zugang anfragen</a>
-    <p class="hint" id="reqOk" style="margin-top:8px"></p>
+    <p class="hint" style="margin:0 0 4px"><b>Noch kein Passwort?</b> Schreib Tekin Kaplan eine E-Mail, dann bekommst du eins.</p>
+    <a class="opbtn" id="reqBtn" style="display:block;text-align:center;text-decoration:none" href="mailto:kaplaniket@gmail.com?subject=Ladestopp%3A%20Passwort%20bitte&body=Hallo%20Tekin%2C%0A%0Aich%20m%C3%B6chte%20die%20App%20Ladestopp%20nutzen.%20Kannst%20du%20mir%20ein%20Passwort%20schicken%3F%0A%0AViele%20Gr%C3%BC%C3%9Fe%0A">✉︎ E-Mail an Tekin schreiben</a>
     <p class="hint" style="margin-top:14px"><a href="rechtliches.html" style="color:inherit">Impressum · Datenschutz</a> · © 2026 Tekin Kaplan</p>
   </div>
 </div>
@@ -290,7 +284,6 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
   <button type="button" id="updGo">Aktualisieren</button>
   <button type="button" class="x" id="updLater" aria-label="Später">✕</button>
 </div>
-<a class="updbar" id="reqBar" href="zugang.html" hidden style="text-decoration:none;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 72px)"><div><b id="reqBarT"></b><span>Tippe hier zum Freischalten.</span></div><span style="font-size:1.4rem">›</span></a>
 <dialog class="sheet" id="instDialog" aria-labelledby="instTitle">
   <div class="sheetin">
     <div class="sheethead"><h2 id="instTitle">Ladestopp als App installieren</h2></div>
@@ -334,9 +327,9 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
       <li><button type="button" id="mNew"><span class="i">✚</span><span>Neue Route<small>Ziel und Stopps leeren</small></span></button></li>
       <li><button type="button" id="mInstall"><span class="i">📲</span><span>Als App installieren<small>Anleitung für iPhone und Android</small></span></button></li>
       <li><button type="button" id="mUpdate"><span class="i">⟳</span><span>Nach Update suchen<small id="mVer"></small></span></button></li>
-      <li id="mAdminLi" hidden><a href="zugang.html"><span class="i">👥</span><span>Zugänge verwalten<small>Personen freischalten<span id="mAdminCnt"></span></small></span></a></li>
+      <li id="mAdminLi" hidden><a href="zugang.html"><span class="i">👥</span><span>Passwörter verwalten<small>Neues Passwort erstellen oder Zugang löschen</small></span></a></li>
       <li><a href="rechtliches.html"><span class="i">§</span><span>Impressum, Datenschutz, Lizenzen</span></a></li>
-      <li><button type="button" id="mLock"><span class="i">🔒</span><span>Abmelden<small>Danach brauchst du deinen Zugangslink wieder</small></span></button></li>
+      <li><button type="button" id="mLock"><span class="i">🔒</span><span>Abmelden<small>Danach brauchst du dein Passwort wieder</small></span></button></li>
     </ul>
     <div class="sheetbar"><button type="button" class="primary" style="margin-top:0" id="moreDone">Schließen</button></div>
   </div>
@@ -355,7 +348,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 (function(){
 "use strict";
 /* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
-const APP_VERSION="1.6.0";
+const APP_VERSION="1.7.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -733,74 +726,31 @@ function renderStops(){
 
 renderFilters();
 
-/* ---------- Zugang per persönlichem Link (signiert) ---------- */
-const OWNER_MAIL="kaplaniket@gmail.com";
-const PUBKEY={"kty":"EC","crv":"P-256","x":"FNA_yvRJ8SuYwNEX6updABbhj4rSrUtNwvePCmpv5VI","y":"5BzHaRtpXfnxMLneowhGpSyq3YCqrzdpGYvEhlVMhAQ"};
+/* ---------- Zugang mit Passwort (geprüft auf Tekins Pi) ---------- */
+const PI_API="https://tekin.tail62f658.ts.net/ladestopp/api/";
 let unlocked=false;const unlockWaiters=[];
 function whenUnlocked(fn){unlocked?fn():unlockWaiters.push(fn)}
-const te=new TextEncoder();
-function b64uDec(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
-function b64uEnc(t){return btoa(String.fromCharCode(...te.encode(t))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
-async function shaHex(t){const b=await crypto.subtle.digest("SHA-256",te.encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
-async function checkCode(code){
-  try{
-    const m=String(code).match(/zugang=([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)/)||String(code).trim().match(/^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/);
-    if(!m)return null;
-    const mail=new TextDecoder().decode(b64uDec(m[1]));
-    const key=await crypto.subtle.importKey("jwk",PUBKEY,{name:"ECDSA",namedCurve:"P-256"},false,["verify"]);
-    const ok=await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},key,b64uDec(m[2]),te.encode("ladestopp:v1:"+mail));
-    return ok?{mail,code:m[1]+"."+m[2]}:null;
-  }catch(e){return null}
-}
-async function isRevoked(mail){
-  try{const r=await fetch(new URL("users.json?t="+Date.now(),location.href).href,{cache:"no-store"});if(!r.ok)return false;
-    const j=await r.json();return (j.revoked||[]).includes(await shaHex("ladestopp:"+mail));}catch(e){return false}
-}
-function showLock(msg){unlocked=false;$("lock").hidden=false;$("lockErr").textContent=msg||"";}
+function showLock(msg){unlocked=false;$("lock").hidden=false;$("lockErr").textContent=msg||"";setTimeout(()=>$("lockPw").focus(),300);}
 function doUnlock(){unlocked=true;$("lock").hidden=true;unlockWaiters.splice(0).forEach(f=>{try{f()}catch(e){}});}
+async function piPost(what,body){const r=await fetchT(PI_API+"z/"+what,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)},12000);const j=await r.json().catch(()=>({}));return {status:r.status,...j}}
 async function verifyAccess(){
-  const hadLink=/zugang=/.test(location.hash);
-  const fromLink=hadLink?await checkCode(location.hash):null;
-  if(hadLink)history.replaceState(null,"",location.pathname+location.search);
-  if(fromLink){store.set("access",fromLink.code);store.set("mail",fromLink.mail);}
-  const saved=store.get("access",null);
-  const ok=saved?await checkCode(saved):null;
-  if(!ok){showLock(hadLink&&!fromLink?"Dieser Zugangslink ist ungültig. Bitte frag einen neuen an.":"");return}
-  if(await isRevoked(ok.mail)){store.set("access",null);showLock("Dein Zugang wurde beendet. Du kannst unten einen neuen anfragen.");return}
+  const acc=store.get("acc",null);
+  if(!acc||!acc.token){showLock();return}
   if(!unlocked)doUnlock();
+  try{const r=await piPost("check",{mail:acc.mail,token:acc.token});if(r.ok===false){store.set("acc",null);showLock("Dein Zugang wurde beendet. Schreib Tekin, wenn du ein neues Passwort brauchst.");}}catch(e){}
 }
 verifyAccess();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&unlocked)verifyAccess()});
-$("codeBtn").addEventListener("click",async()=>{
-  const ok=await checkCode($("codeIn").value);
-  if(!ok){$("lockErr").textContent="Das ist kein gültiger Zugangslink. Kopiere den ganzen Link aus der E-Mail.";return}
-  store.set("access",ok.code);store.set("mail",ok.mail);$("lockErr").textContent="";verifyAccess();
-});
-function reqHref(){
-  const n=$("reqName").value.trim(),em=$("reqMail").value.trim().toLowerCase(),m="";
-  const admin=new URL("zugang.html",location.href).href+"#neu="+b64uEnc(em)+"&name="+b64uEnc(n);
-  const body=`Hallo Tekin,\n\nich würde gerne die App Ladestopp nutzen.\n\nName: ${n}\nE-Mail: ${em}\n\nViele Grüße\n${n}\n\n—\nFür Tekin: Zum Freischalten hier tippen:\n${admin}`;
-  return `mailto:${OWNER_MAIL}?subject=${encodeURIComponent("Ladestopp: Zugang für "+(n||em))}&body=${encodeURIComponent(body)}`;
-}
-$("reqBtn").addEventListener("click",e=>{e.preventDefault();
-  if(!$("reqName").value.trim()){$("reqName").focus();$("reqName").placeholder="Bitte zuerst deinen Namen eintragen";return}
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($("reqMail").value.trim())){$("reqMail").focus();$("reqMail").placeholder="Bitte gültige E-Mail eintragen";return}
-  sendRequest();});
-const PI_API="https://tekin.tail62f658.ts.net/ladestopp/api/";
-async function sendRequest(){
-  const n=$("reqName").value.trim(),em=$("reqMail").value.trim().toLowerCase();
-  $("reqBtn").textContent="Sende …";
+$("lockForm").addEventListener("submit",async e=>{
+  e.preventDefault();const pw=$("lockPw").value.trim();if(!pw){$("lockPw").focus();return}
+  $("lockBtn").disabled=true;$("lockErr").textContent="";
   try{
-    const r=await fetchT(PI_API+"anfrage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,mail:em})},12000);
-    if(r.ok){$("reqOk").textContent="✓ Anfrage gesendet. Du bekommst deinen Zugangslink an "+em+".";$("reqBtn").textContent="✓ Gesendet";return}
-    if(r.status===429){$("reqOk").textContent="Bitte warte kurz und versuch es dann noch einmal.";$("reqBtn").textContent="✉︎ Zugang anfragen";return}
-    throw new Error(r.status);
-  }catch(e){
-    $("reqBtn").textContent="✉︎ Zugang anfragen";
-    $("reqOk").textContent="Direkt senden ging gerade nicht, deshalb öffnet sich jetzt eine E-Mail. Bitte abschicken.";
-    location.href=reqHref();
-  }
-}
+    const r=await piPost("login",{pw});
+    if(r.ok){store.set("acc",{mail:r.mail,name:r.name,token:r.token,chef:!!r.chef});$("lockPw").value="";doUnlock();}
+    else $("lockErr").textContent=r.error||"Das Passwort stimmt nicht.";
+  }catch(x){$("lockErr").textContent="Keine Verbindung. Bitte prüfe dein Internet und versuch es nochmal."}
+  finally{$("lockBtn").disabled=false}
+});
 
 let hereMarker=null, accCircle=null, watchId=null, live=false, lastPos=null, firstFix=true;
 function setLive(on){
@@ -887,21 +837,8 @@ $("tbGo").addEventListener("click",()=>{
   if(S.route){$("results").hidden?run():scrollToEl($("results"));if(!$("results").hidden)setStatus("Wähle mit „+ Als Stopp“ deine Ladestopps, dann erscheint „Navigation starten“.");return}
   run();
 });
-async function adminCheck(){
-  let k=null;try{k=localStorage.getItem("ladestopp-admin:key")}catch(e){}
-  if(!k)return;
-  try{
-    const t=await shaHex("ladestopp-admin:"+k);
-    const r=await fetchT(PI_API+"anfragen",{headers:{"X-Ladestopp-Admin":t},cache:"no-store"},10000);
-    if(!r.ok)return;const n=((await r.json()).anfragen||[]).length;
-    $("mAdminCnt").textContent=n?` · ${n} neue Anfrage${n>1?"n":""}`:"";
-    $("reqBar").hidden=!n;$("reqBarT").textContent=`${n} neue Zugangs-Anfrage${n>1?"n":""}`;
-  }catch(e){}
-}
-whenUnlocked(adminCheck);
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&unlocked)adminCheck()});
 function syncMenu(){
-  try{$("mAdminLi").hidden=!localStorage.getItem("ladestopp-admin:key")}catch(e){}
+  $("mAdminLi").hidden=!(store.get("acc",{})||{}).chef;
   $("mLiveT").classList.toggle("on",!!live);
   const t=store.get("theme","auto");$("mDarkS").textContent={auto:"Wie Handy",light:"Hell",dark:"Dunkel"}[t];
   $("mVer").textContent="Installiert: Version "+APP_VERSION;
@@ -922,7 +859,7 @@ $("mReset").addEventListener("click",()=>{S.plugs=[];S.power=0;S.radius=3;S.ops=
 $("mNew").addEventListener("click",()=>{S.to=null;S.route=null;S.stations=[];S.selected.clear();$("to").value="";routeLayer.clearLayers();stLayer.clearLayers();$("results").hidden=true;$("stopsBox").hidden=true;$("plateSub").textContent="Ziel eingeben, Ladesäulen auswählen, losfahren.";setStatus("");closeDlg("moreDialog");panel.scrollTo({top:0,behavior:"smooth"});setTimeout(()=>$("to").focus(),250);});
 $("mInstall").addEventListener("click",()=>{closeDlg("moreDialog");showTab(isAndroid);openDlg("instDialog")});
 $("mUpdate").addEventListener("click",async()=>{try{sessionStorage.removeItem("ladestopp:skip")}catch(e){}closeDlg("moreDialog");await checkUpdate();if($("updBar").hidden)setStatus("Du hast die neueste Version ("+APP_VERSION+").");});
-$("mLock").addEventListener("click",()=>{store.set("access",null);location.reload();});
+$("mLock").addEventListener("click",()=>{store.set("acc",null);location.reload();});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
 setInterval(checkUpdate,30*60*1000);
 })();
