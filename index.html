@@ -37,14 +37,16 @@
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme:dark){
-  :root{--bg:#0E1729;--surface:#16223A;--ink:#E6ECF5;--muted:#93A3BD;--line:#2A3956;
+  :root:not([data-theme="light"]){--bg:#0E1729;--surface:#16223A;--ink:#E6ECF5;--muted:#93A3BD;--line:#2A3956;
     --sign:#2C5FB8;--sign-ink:#FFFFFF;--amber:#F5C02A;--amber-ink:#1B1600;--danger:#FF8A80;color-scheme:dark}
 }
+:root[data-theme="dark"]{--bg:#0E1729;--surface:#16223A;--ink:#E6ECF5;--muted:#93A3BD;--line:#2A3956;
+    --sign:#2C5FB8;--sign-ink:#FFFFFF;--amber:#F5C02A;--amber-ink:#1B1600;--danger:#FF8A80;color-scheme:dark}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.45 "Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
 h1,h2,.cond{font-family:"Barlow Semi Condensed","Barlow",system-ui,sans-serif}
-button,input,select{font:inherit;color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 
 .app{flex:1;display:flex;flex-direction:column;min-height:0}
@@ -114,11 +116,37 @@ details.filters summary span{color:var(--muted);font-weight:400;font-size:.9rem}
 .st h3{margin:0;font-size:1rem;font-weight:600}
 .meta{font-size:.88rem;color:var(--muted)}
 .pw{display:inline-block;font-weight:700;color:var(--sign);margin-right:6px}
-@media (prefers-color-scheme:dark){.pw{color:#8DB4FF}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pw{color:#8DB4FF}}
+:root[data-theme="dark"] .pw{color:#8DB4FF}
 .acts{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
 .acts button,.acts a{border:1.5px solid var(--line);background:transparent;border-radius:6px;padding:6px 10px;font-size:.88rem;cursor:pointer;color:var(--ink);text-decoration:none}
 .st.sel .acts .add{background:var(--amber);border-color:var(--amber);color:var(--amber-ink)}
 .empty{color:var(--muted);text-align:center;padding:18px 8px}
+/* Sperrbildschirm */
+.lock{position:fixed;inset:0;z-index:5000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);overflow-y:auto}
+.lock[hidden]{display:none}
+.lockcard{width:100%;max-width:400px}
+.lockcard .plate{margin-bottom:14px}
+.lockcard .err{color:var(--danger);min-height:1.3em;margin:6px 0 0;font-size:.92rem}
+.lockcard hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.lockcard textarea{min-height:70px;resize:vertical}
+/* Leiste unten */
+.tabbar{position:fixed;z-index:2500;left:0;right:0;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--line);padding:4px 4px calc(env(safe-area-inset-bottom,0px) + 4px);box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+.tabbar button{flex:1;min-width:0;border:0;background:transparent;color:var(--muted);padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.72rem;font-weight:600;cursor:pointer;border-radius:8px}
+.tabbar button .i{font-size:1.3rem;line-height:1.2}
+.tabbar button:active{background:var(--bg)}
+.tabbar .go2{color:var(--ink)}
+.tabbar .go2 .i{background:var(--amber);color:var(--amber-ink);border-radius:999px;width:2.1rem;height:2.1rem;display:flex;align-items:center;justify-content:center;font-size:1.05rem}
+.tabbar .badge{position:absolute;margin-left:22px;margin-top:-2px;background:var(--sign);color:#fff;border-radius:999px;font-size:.65rem;padding:0 5px}
+.app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 62px)}
+@media (min-width:900px){.tabbar{left:0;right:auto;width:420px}}
+.menu{list-style:none;margin:10px 0 0;padding:0;overflow-y:auto;flex:1}
+.menu button,.menu a{width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font-size:1rem;text-align:left;text-decoration:none;cursor:pointer}
+.menu .i{width:1.6rem;text-align:center;font-size:1.15rem}
+.menu small{display:block;color:var(--muted);font-size:.82rem}
+.toggle{margin-left:auto;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;flex:none}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle.on{background:var(--sign)}.toggle.on::after{left:21px}
 .foot{margin-top:18px;font-size:.78rem;color:var(--muted)}
 .foot a{color:inherit}
 
@@ -161,11 +189,32 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 .sheetbar{display:flex;gap:8px;margin-top:10px}
 .sheetbar button{flex:1}
 .ghost{padding:12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);font-weight:600;cursor:pointer}
-.tiles-dark{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.is-dark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
+<div class="lock" id="lock" hidden>
+  <div class="lockcard">
+    <div class="plate"><h1>Ladestopp</h1><p>Privater Zugang. Bitte mit deiner E-Mail und deinem Passwort anmelden.</p></div>
+    <form id="lockForm">
+      <label for="lockMail" class="hint" style="display:block;margin:0 0 4px">E-Mail</label>
+      <input id="lockMail" class="input" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false">
+      <label for="lockPw" class="hint" style="display:block;margin:10px 0 4px">Passwort</label>
+      <input id="lockPw" class="input" type="password" autocomplete="current-password" enterkeyhint="go">
+      <p class="err" id="lockErr" role="alert"></p>
+      <button class="primary" type="submit" style="margin-top:6px">Öffnen</button>
+    </form>
+    <hr>
+    <h2 style="font-size:1.1rem;margin:0 0 4px">Noch kein Passwort?</h2>
+    <p class="hint" style="margin:0 0 8px">Frag deinen persönlichen Zugang bei Tekin Kaplan an. Deine Anfrage öffnet sich als E-Mail in deinem Mailprogramm, du schickst sie selbst ab. Das Passwort bekommst du dann an diese E-Mail-Adresse.</p>
+    <input id="reqName" class="input" placeholder="Dein Name" autocomplete="name">
+    <input id="reqMail" class="input" style="margin-top:8px" type="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" autocapitalize="off">
+    <textarea id="reqMsg" class="input" style="margin-top:8px" placeholder="Kurze Nachricht (optional)"></textarea>
+    <a class="opbtn" id="reqBtn" style="display:block;text-align:center;text-decoration:none" href="#">✉︎ Passwort anfragen</a>
+    <p class="hint" style="margin-top:14px"><a href="rechtliches.html" style="color:inherit">Impressum · Datenschutz</a> · © 2026 Tekin Kaplan</p>
+  </div>
+</div>
 <div class="app">
   <div id="map" role="region" aria-label="Karte"></div>
   <main class="panel">
@@ -267,6 +316,30 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
     <div class="sheetbar"><button type="button" class="primary" style="margin-top:0" id="instDone">Verstanden</button></div>
   </div>
 </dialog>
+<nav class="tabbar" id="tabbar" aria-label="Bedienung">
+  <button type="button" id="tbSearch"><span class="i">🔍</span>Ziel</button>
+  <button type="button" id="tbFilter"><span class="i">⚙︎</span>Filter</button>
+  <button type="button" id="tbOps"><span class="i">🏷</span>Anbieter</button>
+  <button type="button" id="tbList"><span class="i">⚡︎</span>Ladesäulen</button>
+  <button type="button" class="go2" id="tbGo"><span class="i">▶</span>Los</button>
+  <button type="button" id="tbMore"><span class="i">☰</span>Mehr</button>
+</nav>
+<dialog class="sheet" id="moreDialog" aria-labelledby="moreTitle">
+  <div class="sheetin">
+    <div class="sheethead"><h2 id="moreTitle">Einstellungen und mehr</h2></div>
+    <ul class="menu">
+      <li><button type="button" id="mLive"><span class="i">📍</span><span>Live-Standort als Start<small>Startpunkt folgt deiner Position</small></span><span class="toggle" id="mLiveT"></span></button></li>
+      <li><button type="button" id="mDark"><span class="i">🌓</span><span>Darstellung<small id="mDarkS">Wie Handy</small></span></button></li>
+      <li><button type="button" id="mReset"><span class="i">↺</span><span>Filter zurücksetzen<small>Stecker, Leistung, Umweg und Anbieter</small></span></button></li>
+      <li><button type="button" id="mNew"><span class="i">✚</span><span>Neue Route<small>Ziel und Stopps leeren</small></span></button></li>
+      <li><button type="button" id="mInstall"><span class="i">📲</span><span>Als App installieren<small>Anleitung für iPhone und Android</small></span></button></li>
+      <li><button type="button" id="mUpdate"><span class="i">⟳</span><span>Nach Update suchen<small id="mVer"></small></span></button></li>
+      <li><a href="rechtliches.html"><span class="i">§</span><span>Impressum, Datenschutz, Lizenzen</span></a></li>
+      <li><button type="button" id="mLock"><span class="i">🔒</span><span>Abmelden<small>E-Mail und Passwort beim nächsten Öffnen wieder abfragen</small></span></button></li>
+    </ul>
+    <div class="sheetbar"><button type="button" class="primary" style="margin-top:0" id="moreDone">Schließen</button></div>
+  </div>
+</dialog>
 <dialog class="sheet" id="opDialog" aria-labelledby="opTitle">
   <div class="sheetin">
     <div class="sheethead"><h2 id="opTitle">Anbieter</h2><button type="button" class="ghost" id="opClear">Alle anzeigen</button></div>
@@ -281,7 +354,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 (function(){
 "use strict";
 /* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
-const APP_VERSION="1.2.0";
+const APP_VERSION="1.3.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -319,11 +392,11 @@ const S = {
   selected:new Set(), focus:null
 };
 
-const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+let dark=false;
 const map = L.map("map",{zoomControl:false}).setView([51.16,10.45],6);
 L.control.zoom({position:"topright"}).addTo(map);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {maxZoom:19,className:dark?"tiles-dark":"",attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende'}).addTo(map);
+  {maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende'}).addTo(map);
 const routeLayer = L.layerGroup().addTo(map);
 const stLayer = L.layerGroup().addTo(map);
 const markers = new Map();
@@ -659,6 +732,42 @@ function renderStops(){
 
 renderFilters();
 
+/* ---------- Zugang mit persönlichem Passwort (je E-Mail) ---------- */
+const OWNER_MAIL="kaplaniket@gmail.com";
+let unlocked=false;const unlockWaiters=[];
+function whenUnlocked(fn){unlocked?fn():unlockWaiters.push(fn)}
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+async function loadUsers(){const r=await fetch(new URL("users.json?t="+Date.now(),location.href).href,{cache:"no-store"});if(!r.ok)throw new Error(r.status);return new Set((await r.json()).users||[])}
+function showLock(msg){unlocked=false;$("lock").hidden=false;$("lockErr").textContent=msg||"";const m=store.get("mail","");if(m)$("lockMail").value=m;setTimeout(()=>(m?$("lockPw"):$("lockMail")).focus(),300);}
+function doUnlock(){unlocked=true;$("lock").hidden=true;unlockWaiters.splice(0).forEach(f=>{try{f()}catch(e){}});}
+async function verifyAccess(){
+  const tok=store.get("unlock",null);
+  if(!tok){showLock();return}
+  if(!unlocked)doUnlock();
+  try{const u=await loadUsers();if(!u.has(tok)){store.set("unlock",null);showLock("Dein Zugang ist nicht mehr gültig. Bitte neu anmelden oder einen Zugang anfragen.");}}catch(e){}
+}
+verifyAccess();
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&unlocked)verifyAccess()});
+$("lockForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const mail=$("lockMail").value.trim().toLowerCase(),pw=$("lockPw").value;
+  if(!mail||!pw){$("lockErr").textContent="Bitte E-Mail und Passwort eingeben.";return}
+  let h,u;
+  try{h=await sha("ladestopp:"+mail+":"+pw)}catch(x){$("lockErr").textContent="Dein Browser unterstützt die Prüfung nicht. Öffne die App in Safari oder Chrome.";return}
+  try{u=await loadUsers()}catch(x){$("lockErr").textContent="Keine Verbindung. Bitte prüfe dein Internet und versuch es noch einmal.";return}
+  if(u.has(h)){store.set("unlock",h);store.set("mail",mail);$("lockPw").value="";$("lockErr").textContent="";doUnlock();}
+  else{$("lockErr").textContent="E-Mail oder Passwort stimmt nicht.";$("lockPw").select();}
+});
+function reqHref(){
+  const n=$("reqName").value.trim(),em=$("reqMail").value.trim(),m=$("reqMsg").value.trim();
+  const body=`Hallo Tekin,\n\nich würde gerne die App Ladestopp nutzen. Kannst du mir einen Zugang einrichten?\n\nName: ${n}\nE-Mail für den Zugang: ${em}\n\n${m?m+"\n\n":""}Viele Grüße\n${n}`;
+  return `mailto:${OWNER_MAIL}?subject=${encodeURIComponent("Ladestopp: Passwort-Anfrage"+(n?" von "+n:""))}&body=${encodeURIComponent(body)}`;
+}
+$("reqBtn").addEventListener("click",e=>{e.preventDefault();
+  if(!$("reqName").value.trim()){$("reqName").focus();$("reqName").placeholder="Bitte zuerst deinen Namen eintragen";return}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($("reqMail").value.trim())){$("reqMail").focus();$("reqMail").placeholder="Bitte gültige E-Mail eintragen";return}
+  location.href=reqHref();});
+
 let hereMarker=null, accCircle=null, watchId=null, live=false, lastPos=null, firstFix=true;
 function setLive(on){
   live=on;const b=$("locBtn");b.classList.toggle("live",on);b.setAttribute("aria-pressed",String(on));
@@ -690,7 +799,7 @@ function startLive(){
     }else if(!lastPos)setStatus("Standort wird noch gesucht … Geh am besten kurz ins Freie oder tippe einen Startort ein.");
   },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
 }
-startLive();
+whenUnlocked(()=>{if(store.get("live",true))startLive();});
 /* ---------- Installations-Anleitung ---------- */
 const isStandalone=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
 const isAndroid=/android/i.test(navigator.userAgent);
@@ -725,6 +834,47 @@ async function checkUpdate(){
 $("updGo").addEventListener("click",()=>{location.replace(location.pathname+"?v="+encodeURIComponent(latest||Date.now()))});
 $("updLater").addEventListener("click",()=>{$("updBar").hidden=true;try{sessionStorage.setItem("ladestopp:skip",latest)}catch(e){}});
 checkUpdate();
+
+/* ---------- Leiste unten und Menü ---------- */
+const panel=document.querySelector(".panel");
+function openDlg(id){const d=$(id);d.showModal?d.showModal():d.setAttribute("open","")}
+function closeDlg(id){const d=$(id);d.close?d.close():d.removeAttribute("open")}
+function scrollToEl(el){if(!el)return;el.scrollIntoView({behavior:"smooth",block:"start"})}
+$("tbSearch").addEventListener("click",()=>{panel.scrollTo({top:0,behavior:"smooth"});setTimeout(()=>$("to").focus(),250)});
+$("tbFilter").addEventListener("click",()=>{$("filters").open=true;scrollToEl($("filters"))});
+$("tbOps").addEventListener("click",()=>$("opOpen").click());
+$("tbList").addEventListener("click",()=>{
+  if(!$("results").hidden)scrollToEl($("results"));
+  else if(S.route)setStatus("Noch keine Ladesäulen geladen. Tippe auf „Ladestationen auf der Route suchen“.");
+  else{panel.scrollTo({top:0,behavior:"smooth"});setStatus("Gib zuerst ein Ziel ein.");setTimeout(()=>$("to").focus(),250)}
+});
+$("tbGo").addEventListener("click",()=>{
+  if(!$("stopsBox").hidden&&$("gmapsBtn").href){scrollToEl($("stopsBox"));return}
+  if(S.route){$("results").hidden?run():scrollToEl($("results"));if(!$("results").hidden)setStatus("Wähle mit „+ Als Stopp“ deine Ladestopps, dann erscheint „Navigation starten“.");return}
+  run();
+});
+function syncMenu(){
+  $("mLiveT").classList.toggle("on",!!live);
+  const t=store.get("theme","auto");$("mDarkS").textContent={auto:"Wie Handy",light:"Hell",dark:"Dunkel"}[t];
+  $("mVer").textContent="Installiert: Version "+APP_VERSION;
+}
+$("tbMore").addEventListener("click",()=>{syncMenu();openDlg("moreDialog")});
+$("moreDone").addEventListener("click",()=>closeDlg("moreDialog"));
+$("mLive").addEventListener("click",()=>{
+  if(live){setLive(false);if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;$("from").value="";S.from=null;store.set("live",false);setStatus("Live-Standort ist aus. Gib einen Startort ein.");}
+  else{store.set("live",true);startLive();}
+  syncMenu();
+});
+function applyTheme(){const t=store.get("theme","auto");if(t==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);
+  dark=t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("is-dark",dark);}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
+$("mDark").addEventListener("click",()=>{const order=["auto","light","dark"];const t=store.get("theme","auto");store.set("theme",order[(order.indexOf(t)+1)%3]);applyTheme();syncMenu();});
+applyTheme();
+$("mReset").addEventListener("click",()=>{S.plugs=[];S.power=0;S.radius=3;S.ops=[];["plugs","power","radius","ops"].forEach(k=>store.set(k,k==="radius"?3:k==="power"?0:[]));renderFilters();renderList();reloadIfNeeded();closeDlg("moreDialog");setStatus("Filter zurückgesetzt.");});
+$("mNew").addEventListener("click",()=>{S.to=null;S.route=null;S.stations=[];S.selected.clear();$("to").value="";routeLayer.clearLayers();stLayer.clearLayers();$("results").hidden=true;$("stopsBox").hidden=true;$("plateSub").textContent="Ziel eingeben, Ladesäulen auswählen, losfahren.";setStatus("");closeDlg("moreDialog");panel.scrollTo({top:0,behavior:"smooth"});setTimeout(()=>$("to").focus(),250);});
+$("mInstall").addEventListener("click",()=>{closeDlg("moreDialog");showTab(isAndroid);openDlg("instDialog")});
+$("mUpdate").addEventListener("click",async()=>{try{sessionStorage.removeItem("ladestopp:skip")}catch(e){}closeDlg("moreDialog");await checkUpdate();if($("updBar").hidden)setStatus("Du hast die neueste Version ("+APP_VERSION+").");});
+$("mLock").addEventListener("click",()=>{store.set("unlock",null);location.reload();});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
 setInterval(checkUpdate,30*60*1000);
 })();
