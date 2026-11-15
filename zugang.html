@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#1F4E9E">
-<title>Ladestopp – Zugänge</title>
+<title>Ladestopp – Zugang vergeben</title>
 <link rel="icon" href="icon-180.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <style>
@@ -17,255 +17,133 @@
 :root{--bg:#EEF1F5;--surface:#fff;--ink:#13233F;--muted:#5B6B85;--line:#D5DCE6;--sign:#1F4E9E;--amber:#F0B400;--amber-ink:#1B1600;--danger:#B3261E;--ok:#1B7F3B;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0E1729;--surface:#16223A;--ink:#E6ECF5;--muted:#93A3BD;--line:#2A3956;--sign:#2C5FB8;--danger:#FF8A80;--ok:#6FD08C;color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Barlow",system-ui,sans-serif;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 32px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 "Barlow",system-ui,sans-serif;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px calc(env(safe-area-inset-bottom,0px) + 32px)}
 main{max-width:520px;margin:0 auto}
 .plate{background:var(--sign);color:#fff;border-radius:10px;padding:12px 14px;border:2px solid #fff;box-shadow:0 0 0 2px var(--sign)}
 .plate h1{margin:0;font:700 1.5rem "Barlow Semi Condensed",sans-serif}
 .plate p{margin:2px 0 0;opacity:.85}
 section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px}
-section[hidden]{display:none}
-h2{margin:0 0 8px;font:700 1.2rem "Barlow Semi Condensed",sans-serif}
-label{display:block;color:var(--muted);font-size:.85rem;margin:10px 0 4px}
-input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
-.row{display:flex;gap:8px}.row input{flex:1}
-button,a.btn{display:block;width:100%;margin-top:12px;padding:13px;border:0;border-radius:8px;background:var(--sign);color:#fff;font:600 1rem "Barlow",sans-serif;text-align:center;text-decoration:none;cursor:pointer}
-button:disabled{opacity:.5}
+section[hidden],[hidden]{display:none!important}
+h2{margin:0 0 8px;font:700 1.25rem "Barlow Semi Condensed",sans-serif}
+label{display:block;color:var(--muted);font-size:.9rem;margin:10px 0 4px}
+input{width:100%;padding:13px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+button,a.btn{display:block;width:100%;margin-top:12px;padding:15px;border:0;border-radius:10px;background:var(--sign);color:#fff;font:600 1.05rem "Barlow",sans-serif;text-align:center;text-decoration:none;cursor:pointer}
 .sec{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
 .amber{background:var(--amber);color:var(--amber-ink)}
-.mini{width:auto;margin:0;padding:8px 12px;font-size:.9rem}
-.msg{margin:10px 0 0;font-size:.95rem;min-height:1.2em}
-.msg.err{color:var(--danger)}.msg.ok{color:var(--ok)}
-.muted{color:var(--muted);font-size:.9rem}
-ol{padding-left:1.3em;margin:6px 0}ol li{margin:4px 0}
-.list{list-style:none;margin:0;padding:0}
-.list li{border-top:1px solid var(--line);padding:10px 0;display:flex;gap:10px;align-items:center}
-.list li:first-child{border-top:0}
-.list .who{flex:1;min-width:0}
-.list .who b{display:block;overflow:hidden;text-overflow:ellipsis}
-.list .who small{color:var(--muted)}
+.msg{margin:10px 0 0;min-height:1.2em}.msg.err{color:var(--danger)}.msg.ok{color:var(--ok)}
+.muted{color:var(--muted);font-size:.95rem}
 .done{border:2px solid var(--amber)}
-.share{display:flex;gap:8px}.share>*{flex:1}
-a{color:var(--sign)}
-@media (prefers-color-scheme:dark){a{color:#8DB4FF}}
+details summary{cursor:pointer;color:var(--muted)}
 </style>
 </head>
 <body>
 <main>
-<div class="plate"><h1>Zugänge verwalten</h1><p>Ladestopp · nur für Tekin</p></div>
+<div class="plate"><h1>Zugang vergeben</h1><p>Ladestopp · nur für Tekin</p></div>
 
-<!-- Einrichtung -->
-<section id="setup" hidden>
-  <h2>Einmal einrichten</h2>
-  <p class="muted">Damit diese Seite Zugänge freischalten kann, braucht sie einen Schlüssel für dein GitHub-Projekt. Der Schlüssel bleibt nur auf diesem Handy gespeichert.</p>
-  <ol>
-    <li>Öffne <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com › Neuer Zugriffsschlüssel</a> und melde dich an.</li>
-    <li><b>Token name:</b> „Ladestopp Zugänge“. <b>Expiration:</b> 1 Jahr (oder länger, falls angeboten).</li>
-    <li><b>Repository access:</b> „Only select repositories“ › <b>ladestopp</b>.</li>
-    <li><b>Permissions › Repository permissions › Contents:</b> „Read and write“. Sonst nichts ändern.</li>
-    <li>Unten auf <b>„Generate token“</b>, den Schlüssel (beginnt mit <code>github_pat_</code>) kopieren und hier einfügen.</li>
-  </ol>
-  <label for="tok">Schlüssel</label>
-  <input id="tok" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
-  <button id="tokSave">Speichern und prüfen</button>
-  <p class="msg" id="setupMsg"></p>
+<section id="nokey" hidden>
+  <h2>Noch nicht eingerichtet</h2>
+  <p class="muted">Diese Seite braucht einmalig deinen Einrichtungslink. Öffne ihn aus dem Chat mit Claude in <b>Safari</b>. Danach funktioniert alles auf diesem Handy.</p>
 </section>
 
-<section id="quick">
-  <h2>Ohne Schlüssel: Prüfwert erzeugen</h2>
-  <p class="muted">Solange der Schlüssel noch nicht schreiben darf: E-Mail und Passwort eintragen, Prüfwert kopieren und an Claude schicken. Claude schaltet ihn frei. E-Mail und Passwort verlassen dein Handy dabei nicht.</p>
-  <label for="qm">E-Mail</label>
-  <input id="qm" type="email" autocapitalize="off" spellcheck="false" placeholder="name@beispiel.de" autocomplete="off">
-  <label for="qp">Passwort</label>
-  <div class="row"><input id="qp" autocapitalize="off" spellcheck="false" autocomplete="off"><button class="sec mini" id="qgen" type="button">Neu</button></div>
-  <button id="qBtn" class="sec">Prüfwert erzeugen</button>
-  <p class="msg" id="qOut" style="word-break:break-all"></p>
-  <button id="qCopy" class="amber" hidden>Prüfwert kopieren</button>
+<section id="welcome" class="done" hidden>
+  <h2>Eingerichtet ✓</h2>
+  <p class="muted">Ab jetzt reicht: Wenn dir jemand eine Zugangs-Anfrage schickt, tippst du in der Mail auf den Link. Dann landest du hier und tippst auf „Zugang senden“.</p>
+  <button id="selfBtn" class="amber">Mich selbst freischalten und App öffnen</button>
 </section>
 
-<!-- Neuer Zugang -->
-<section id="add" hidden>
-  <h2>Neuen Zugang anlegen</h2>
+<section id="form" hidden>
+  <h2>Wer bekommt Zugang?</h2>
   <label for="n">Name</label>
   <input id="n" placeholder="z. B. Max Mustermann" autocomplete="off">
   <label for="m">E-Mail</label>
   <input id="m" type="email" autocapitalize="off" spellcheck="false" placeholder="name@beispiel.de" autocomplete="off">
-  <label for="p">Passwort</label>
-  <div class="row"><input id="p" autocapitalize="off" spellcheck="false" autocomplete="off"><button class="sec mini" id="gen" type="button">Neu</button></div>
-  <button id="addBtn" class="amber">Zugang freischalten</button>
-  <p class="msg" id="addMsg"></p>
+  <button id="go" class="amber">✉︎ Zugang senden</button>
+  <p class="msg" id="msg"></p>
 </section>
 
-<!-- Ergebnis zum Weitergeben -->
-<section id="result" class="done" hidden>
-  <h2>Zugangsdaten weitergeben</h2>
-  <p class="muted" id="resText"></p>
-  <div class="share">
-    <a class="btn" id="resMail" href="#">✉︎ Per E-Mail</a>
-    <button id="resShare" class="sec">Teilen …</button>
-  </div>
-  <p class="muted" style="margin-top:10px">Freigeschaltet ist sofort. Bis die App den neuen Zugang kennt, kann es etwa eine Minute dauern.</p>
+<section id="sent" class="done" hidden>
+  <h2>Fast fertig</h2>
+  <p class="muted" id="sentText"></p>
+  <a class="btn" id="mailBtn" href="#">✉︎ Antwort-Mail nochmal öffnen</a>
+  <button id="shareBtn" class="sec">Stattdessen teilen (WhatsApp …)</button>
+  <button id="againBtn" class="sec">Nächste Person</button>
 </section>
 
-<!-- Liste -->
-<section id="listSec" hidden>
-  <h2>Freigeschaltete Personen <span class="muted" id="cnt"></span></h2>
-  <ul class="list" id="list"></ul>
-  <p class="msg" id="listMsg"></p>
-</section>
-
-<section id="settings" hidden>
-  <h2>Einstellungen</h2>
-  <p class="muted">Namen und E-Mails in der Liste sind verschlüsselt gespeichert und nur mit deinem Schlüssel lesbar. Wenn du den Schlüssel erneuerst, mach das hier, dann wird alles automatisch umgeschlüsselt.</p>
-  <label for="tok2">Neuer Schlüssel</label>
-  <input id="tok2" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
-  <button id="tokChange" class="sec">Schlüssel ersetzen</button>
-  <button id="logout" class="sec">Schlüssel von diesem Handy entfernen</button>
-  <p class="msg" id="setMsg"></p>
-  <p class="muted" style="margin-top:12px"><a href="./">‹ Zur App</a></p>
+<section id="extra" hidden>
+  <details>
+    <summary>Zugang beenden</summary>
+    <p class="muted">E-Mail eintragen, „Sperrcode erzeugen“ tippen und den Code an Claude schicken. Die Person ist dann beim nächsten Öffnen abgemeldet.</p>
+    <input id="rm" type="email" autocapitalize="off" spellcheck="false" placeholder="name@beispiel.de">
+    <button id="rmBtn" class="sec">Sperrcode erzeugen und kopieren</button>
+    <p class="msg" id="rmMsg" style="word-break:break-all"></p>
+  </details>
+  <p class="muted" style="margin-top:12px"><a href="./" style="color:inherit">‹ Zur App</a></p>
 </section>
 </main>
-
 <script>
 (function(){
 "use strict";
-const OWNER="kaplaniket",REPO="ladestopp",BRANCH="gh-pages",FILE="users.json";
-const API=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`;
-const KEY="ladestopp-admin:token";
-const W=["Akku","Blitz","Strom","Volt","Ampere","Route","Stecker","Ladung","Fahrt","Karte","Motor","Kurve","Tunnel","Bruecke","Sonne","Wolke","Welle","Kompass","Pilot","Rakete","Anker","Feder","Gipfel","Hafen","Insel","Jaguar","Komet","Laterne","Mond","Nebel","Orbit","Planet"];
+const KEY="ladestopp-admin:key";
 const $=id=>document.getElementById(id);
-const ls={get(){try{return localStorage.getItem(KEY)}catch(e){return null}},set(v){try{v?localStorage.setItem(KEY,v):localStorage.removeItem(KEY)}catch(e){}}};
+const te=new TextEncoder();
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+function b64uDec(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
+function b64uBytes(b){return btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function b64uEnc(t){return b64uBytes(te.encode(t))}
+function dec(t){try{return new TextDecoder().decode(b64uDec(t))}catch(e){return ""}}
 function msg(id,t,cls){const e=$(id);e.textContent=t||"";e.className="msg"+(cls?" "+cls:"")}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function rnd(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
-function gen(){$("p").value=`${W[rnd(W.length)]}-${W[rnd(W.length)]}-${W[rnd(W.length)]}-${rnd(90)+10}`}
-const enc=new TextEncoder(),dec=new TextDecoder();
-async function sha(t){const b=await crypto.subtle.digest("SHA-256",enc.encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
-function b64e(bytes){let s="";bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s)}
-function b64d(str){const s=atob(str.replace(/\s/g,""));return Uint8Array.from(s,c=>c.charCodeAt(0))}
-async function aesKey(token){
-  const base=await crypto.subtle.importKey("raw",enc.encode(token),"PBKDF2",false,["deriveKey"]);
-  return crypto.subtle.deriveKey({name:"PBKDF2",hash:"SHA-256",salt:enc.encode("ladestopp-admin-v1"),iterations:150000},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
-}
-async function seal(key,obj){const iv=crypto.getRandomValues(new Uint8Array(12));const c=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,enc.encode(JSON.stringify(obj))));const o=new Uint8Array(12+c.length);o.set(iv);o.set(c,12);return b64e(o)}
-async function open_(key,s){try{const b=b64d(s);const p=await crypto.subtle.decrypt({name:"AES-GCM",iv:b.slice(0,12)},key,b.slice(12));return JSON.parse(dec.decode(p))}catch(e){return null}}
+async function shaHex(t){const b=await crypto.subtle.digest("SHA-256",te.encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 
-let token=ls.get(),key=null,state=null,sha_=null;
-async function gh(method,body){
-  const r=await fetch(method==="GET"?`${API}?ref=${BRANCH}&t=${Date.now()}`:API,{method,cache:"no-store",headers:{"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined});
-  if(r.status===401)throw new Error("Der Schlüssel ist ungültig oder abgelaufen.");
-  if(r.status===403||r.status===404)throw new Error("Der Schlüssel hat keine Schreibrechte für das Projekt „ladestopp“ (Contents: Read and write).");
-  if(r.status===409||r.status===422)throw new Error("KONFLIKT");
-  if(!r.ok)throw new Error("GitHub antwortet nicht ("+r.status+"). Versuch es gleich noch einmal.");
-  return r.json();
+const h=new URLSearchParams(location.hash.slice(1));
+let fresh=false;
+if(h.get("k")){ls.set(KEY,h.get("k"));fresh=true;}
+const pre={n:h.get("name")?dec(h.get("name")):"",m:h.get("neu")?dec(h.get("neu")):""};
+if(location.hash)history.replaceState(null,"",location.pathname);
+
+async function signer(){return crypto.subtle.importKey("pkcs8",b64uDec(ls.get(KEY)),{name:"ECDSA",namedCurve:"P-256"},false,["sign"])}
+async function makeCode(mail){const sig=await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},await signer(),te.encode("ladestopp:v1:"+mail));return b64uEnc(mail)+"."+b64uBytes(sig)}
+const appUrl=new URL("./",location.href).href;
+
+function letter(name,link){
+  const first=(name||"").trim().split(/\s+/)[0];
+  return `Hallo${first?" "+first:""},\n\nhier ist dein persönlicher Zugang zu Ladestopp. Tippe einfach auf diesen Link, dann bist du angemeldet:\n\n${link}\n\nTipp für das iPhone: Den Link in Safari öffnen und danach über Teilen › „Zum Home-Bildschirm“ als App speichern. Falls die App dort noch einmal nach dem Zugang fragt, kopiere diesen Link und füge ihn unter „Link funktioniert nicht? Hier einfügen“ ein.\n\nBitte gib den Link nicht weiter, er ist nur für dich.\n\nViele Grüße\nTekin`;
 }
-async function load(){
-  const j=await gh("GET");sha_=j.sha;
-  const d=JSON.parse(dec.decode(b64d(j.content)));
-  d.users=d.users||[];d.meta=d.meta||{};state=d;return d;
-}
-async function save(message,mutate){
-  for(let i=0;i<3;i++){
-    await load();mutate(state);
-    const content=b64e(enc.encode(JSON.stringify(state,null,0)+"\n"));
-    try{await gh("PUT",{message,content,sha:sha_,branch:BRANCH});return}
-    catch(e){if(e.message!=="KONFLIKT"||i===2)throw e}
-  }
-}
-async function renderList(){
-  const ul=$("list");ul.innerHTML="";
-  const rows=[];
-  for(const h of state.users){const m=state.meta[h]||{};const who=m.l?await open_(key,m.l):null;rows.push({h,who,d:m.d||""})}
-  rows.sort((a,b)=>(a.who?.n||"~").localeCompare(b.who?.n||"~","de"));
-  $("cnt").textContent=rows.length?`(${rows.length})`:"";
-  if(!rows.length){ul.innerHTML='<li class="muted">Noch niemand freigeschaltet.</li>';return}
-  for(const r of rows){
-    const li=document.createElement("li");
-    li.innerHTML=`<div class="who"><b>${esc(r.who?.n||"Unbekannt")}</b><small>${esc(r.who?.e||"Name nicht lesbar (alter Schlüssel)")}${r.d?" · seit "+esc(r.d):""}</small></div>`;
-    const nb=document.createElement("button");nb.className="sec mini";nb.textContent="Neues PW";
-    nb.disabled=!r.who;nb.onclick=()=>renew(r);
-    const rb=document.createElement("button");rb.className="sec mini";rb.textContent="Entfernen";rb.style.color="var(--danger)";
-    rb.onclick=()=>remove(r);
-    li.append(nb,rb);ul.append(li);
-  }
-}
-function showResult(name,mail,pw){
-  const app=new URL("./",location.href).href;
-  const text=`Hallo ${name.split(" ")[0]},\n\nhier ist dein Zugang zu Ladestopp:\n\nApp: ${app}\nE-Mail: ${mail}\nPasswort: ${pw}\n\nTipp: In Safari öffnen und über Teilen › „Zum Home-Bildschirm“ als App speichern.\n\nViele Grüße\nTekin`;
-  $("resText").textContent=`${name} (${mail}) ist freigeschaltet. Passwort: ${pw}`;
-  $("resMail").href=`mailto:${mail}?subject=${encodeURIComponent("Dein Zugang zu Ladestopp")}&body=${encodeURIComponent(text)}`;
-  $("resShare").hidden=!navigator.share;
-  $("resShare").onclick=()=>navigator.share({title:"Dein Zugang zu Ladestopp",text}).catch(()=>{});
-  $("result").hidden=false;$("result").scrollIntoView({behavior:"smooth",block:"start"});
-}
-async function add(){
-  const name=$("n").value.trim(),mail=$("m").value.trim().toLowerCase(),pw=$("p").value;
-  if(!name){$("n").focus();return msg("addMsg","Bitte einen Namen eintragen.","err")}
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){$("m").focus();return msg("addMsg","Bitte eine gültige E-Mail eintragen.","err")}
-  if(pw.length<8){$("p").focus();return msg("addMsg","Das Passwort braucht mindestens 8 Zeichen.","err")}
-  $("addBtn").disabled=true;msg("addMsg","Schalte frei …");
+let last=null;
+async function send(){
+  const name=$("n").value.trim(),mail=$("m").value.trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)){$("m").focus();return msg("msg","Bitte eine gültige E-Mail eintragen.","err")}
   try{
-    const h=await sha("ladestopp:"+mail+":"+pw);
-    const l=await seal(key,{n:name,e:mail});
-    const today=new Date().toLocaleDateString("de-DE");
-    await save("Zugang hinzugefügt",d=>{
-      if(!d.users.includes(h))d.users.push(h);d.meta[h]={l,d:today};
-    });
-    msg("addMsg","Freigeschaltet ✓","ok");showResult(name,mail,pw);
-    $("n").value="";$("m").value="";gen();await renderList();
-  }catch(e){msg("addMsg",e.message,"err")}
-  finally{$("addBtn").disabled=false}
+    const link=appUrl+"#zugang="+await makeCode(mail);
+    const text=letter(name,link);
+    last={name,mail,link,text};
+    const href=`mailto:${mail}?subject=${encodeURIComponent("Dein Zugang zu Ladestopp")}&body=${encodeURIComponent(text)}`;
+    $("mailBtn").href=href;
+    $("sentText").textContent=`Deine Antwort an ${name||mail} ist vorbereitet. Schick sie in deinem Mailprogramm ab, fertig.`;
+    $("shareBtn").hidden=!navigator.share;
+    $("form").hidden=true;$("welcome").hidden=true;$("sent").hidden=false;
+    location.href=href;
+  }catch(e){msg("msg","Das hat nicht geklappt. Öffne die Seite in Safari.","err")}
 }
-async function remove(r){
-  if(!confirm(`Zugang von ${r.who?.n||"dieser Person"} entfernen? Die Person wird beim nächsten Öffnen der App abgemeldet.`))return;
-  msg("listMsg","Entferne …");
-  try{await save("Zugang entfernt",d=>{d.users=d.users.filter(x=>x!==r.h);delete d.meta[r.h]});msg("listMsg","Entfernt ✓","ok");await renderList()}
-  catch(e){msg("listMsg",e.message,"err")}
-}
-async function renew(r){
-  if(!confirm(`Neues Passwort für ${r.who.n} erzeugen? Das alte Passwort gilt dann nicht mehr.`))return;
-  gen();const pw=$("p").value;msg("listMsg","Erzeuge neues Passwort …");
-  try{
-    const h=await sha("ladestopp:"+r.who.e+":"+pw);const l=await seal(key,r.who);const today=new Date().toLocaleDateString("de-DE");
-    await save("Passwort erneuert",d=>{d.users=d.users.filter(x=>x!==r.h);delete d.meta[r.h];d.users.push(h);d.meta[h]={l,d:today}});
-    msg("listMsg","Neues Passwort erstellt ✓","ok");showResult(r.who.n,r.who.e,pw);gen();await renderList();
-  }catch(e){msg("listMsg",e.message,"err")}
-}
-async function start(){
-  if(!token){$("setup").hidden=false;return}
-  try{
-    key=await aesKey(token);await load();
-    ["add","listSec","settings"].forEach(id=>$(id).hidden=false);$("setup").hidden=true;
-    gen();await renderList();
-  }catch(e){$("setup").hidden=false;msg("setupMsg",e.message,"err")}
-}
-$("gen").onclick=gen;
-function qgen(){$("qp").value=`${W[rnd(W.length)]}-${W[rnd(W.length)]}-${W[rnd(W.length)]}-${rnd(90)+10}`}
-qgen();$("qgen").onclick=qgen;
-$("qBtn").onclick=async()=>{const m=$("qm").value.trim().toLowerCase(),p=$("qp").value;
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){$("qm").focus();return}if(p.length<8){$("qp").focus();return}
-  const h=await sha("ladestopp:"+m+":"+p);msg("qOut","Prüfwert: "+h+"  ·  Passwort merken: "+p);$("qCopy").hidden=false;$("qCopy").dataset.h=h;};
-$("qCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("qCopy").dataset.h);$("qCopy").textContent="Kopiert ✓ – jetzt an Claude schicken"}catch(e){}};
-$("addBtn").onclick=add;
-$("tokSave").onclick=async()=>{
-  const t=$("tok").value.trim();if(!t)return;
-  token=t;msg("setupMsg","Prüfe …");
-  try{await load();ls.set(t);$("tok").value="";msg("setupMsg","Verbunden ✓","ok");await start()}
-  catch(e){token=null;msg("setupMsg",e.message,"err")}
+$("go").onclick=send;
+$("shareBtn").onclick=()=>last&&navigator.share({title:"Dein Zugang zu Ladestopp",text:last.text}).catch(()=>{});
+$("againBtn").onclick=()=>{$("n").value="";$("m").value="";msg("msg","");$("sent").hidden=true;$("form").hidden=false;$("n").focus()};
+$("selfBtn").onclick=async()=>{
+  const code=await makeCode("inhaber@ladestopp");
+  location.href=appUrl+"#zugang="+code;
 };
-$("tokChange").onclick=async()=>{
-  const t=$("tok2").value.trim();if(!t)return;
-  msg("setMsg","Prüfe neuen Schlüssel und schlüssle um …");
-  const oldKey=key;const oldToken=token;
-  try{
-    token=t;await load();const newKey=await aesKey(t);
-    const plain={};for(const h of state.users){const m=state.meta[h];if(m&&m.l){const w=await open_(oldKey,m.l);if(w)plain[h]=w}}
-    const sealed={};for(const h in plain)sealed[h]=await seal(newKey,plain[h]);
-    await save("Schlüssel erneuert",d=>{for(const h in sealed)if(d.meta[h])d.meta[h].l=sealed[h]});
-    key=newKey;ls.set(t);$("tok2").value="";msg("setMsg","Neuer Schlüssel aktiv ✓","ok");await renderList();
-  }catch(e){token=oldToken;msg("setMsg",e.message,"err")}
+$("rmBtn").onclick=async()=>{
+  const m=$("rm").value.trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){$("rm").focus();return}
+  const c=await shaHex("ladestopp:"+m);
+  try{await navigator.clipboard.writeText("Sperrcode Ladestopp: "+c);msg("rmMsg","Kopiert ✓ Jetzt an Claude schicken: "+c,"ok")}catch(e){msg("rmMsg","Sperrcode: "+c)}
 };
-$("logout").onclick=()=>{if(!confirm("Schlüssel von diesem Handy entfernen? Die Zugänge bleiben bestehen."))return;ls.set(null);location.reload()};
-start();
+
+if(!ls.get(KEY)){$("nokey").hidden=false}
+else{
+  if(fresh)$("welcome").hidden=false;
+  $("form").hidden=false;$("extra").hidden=false;
+  $("n").value=pre.n;$("m").value=pre.m;
+  if(pre.m)msg("msg",`Anfrage von ${pre.n||pre.m}. Tippe auf „Zugang senden“.`,"ok");
+}
 })();
 </script>
 </body>

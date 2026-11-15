@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Zugänge verwalten (im Branch gh-pages, danach committen und pushen).
-Den Prüfwert erzeugt Tekin auf zugang.html (E-Mail + Passwort werden nur auf dem Handy berechnet).
-  python3 zugang.py add PRUEFWERT
-  python3 zugang.py remove PRUEFWERT"""
+"""Zugang beenden (im Branch gh-pages, danach committen und pushen).
+Tekin erzeugt auf zugang.html unter „Zugang beenden“ einen Sperrcode (SHA-256 der E-Mail).
+  python3 zugang.py sperren SPERRCODE
+  python3 zugang.py freigeben SPERRCODE"""
 import json, re, sys
 cmd, h = sys.argv[1], sys.argv[2].strip().lower()
-assert re.fullmatch(r"[0-9a-f]{64}", h), "Prüfwert muss 64 Hex-Zeichen haben"
-d = json.load(open("users.json"))
-if cmd == "add" and h not in d["users"]: d["users"].append(h)
-if cmd == "remove": d["users"] = [x for x in d["users"] if x != h]
-json.dump(d, open("users.json", "w"), indent=0)
-print(len(d["users"]), "Zugänge")
+assert re.fullmatch(r"[0-9a-f]{64}", h), "Sperrcode muss 64 Hex-Zeichen haben"
+d = json.load(open("users.json")); d.setdefault("revoked", [])
+if cmd == "sperren" and h not in d["revoked"]: d["revoked"].append(h)
+if cmd == "freigeben": d["revoked"] = [x for x in d["revoked"] if x != h]
+json.dump(d, open("users.json", "w")); print(len(d["revoked"]), "gesperrt")

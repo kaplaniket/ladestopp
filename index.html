@@ -196,22 +196,20 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 <body>
 <div class="lock" id="lock" hidden>
   <div class="lockcard">
-    <div class="plate"><h1>Ladestopp</h1><p>Privater Zugang. Bitte mit deiner E-Mail und deinem Passwort anmelden.</p></div>
-    <form id="lockForm">
-      <label for="lockMail" class="hint" style="display:block;margin:0 0 4px">E-Mail</label>
-      <input id="lockMail" class="input" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false">
-      <label for="lockPw" class="hint" style="display:block;margin:10px 0 4px">Passwort</label>
-      <input id="lockPw" class="input" type="password" autocomplete="current-password" enterkeyhint="go">
-      <p class="err" id="lockErr" role="alert"></p>
-      <button class="primary" type="submit" style="margin-top:6px">Öffnen</button>
-    </form>
+    <div class="plate"><h1>Ladestopp</h1><p>Privater Zugang</p></div>
+    <p style="margin:0 0 6px"><b>Du hast schon einen Zugangslink per E-Mail?</b><br>Dann tippe ihn in der E-Mail einfach an.</p>
+    <details id="codeBox" style="margin-top:6px">
+      <summary class="hint" style="cursor:pointer">Link funktioniert nicht? Hier einfügen</summary>
+      <input id="codeIn" class="input" style="margin-top:8px" placeholder="Zugangslink aus der E-Mail einfügen" autocapitalize="off" spellcheck="false" autocomplete="off">
+      <button class="primary" type="button" id="codeBtn" style="margin-top:8px">Öffnen</button>
+    </details>
+    <p class="err" id="lockErr" role="alert"></p>
     <hr>
-    <h2 style="font-size:1.1rem;margin:0 0 4px">Noch kein Passwort?</h2>
-    <p class="hint" style="margin:0 0 8px">Frag deinen persönlichen Zugang bei Tekin Kaplan an. Deine Anfrage öffnet sich als E-Mail in deinem Mailprogramm, du schickst sie selbst ab. Das Passwort bekommst du dann an diese E-Mail-Adresse.</p>
+    <h2 style="font-size:1.1rem;margin:0 0 4px">Noch keinen Zugang?</h2>
+    <p class="hint" style="margin:0 0 8px">Frag ihn bei Tekin Kaplan an. Es öffnet sich eine fertige E-Mail, die du nur noch abschickst. Den Zugangslink bekommst du dann als Antwort.</p>
     <input id="reqName" class="input" placeholder="Dein Name" autocomplete="name">
     <input id="reqMail" class="input" style="margin-top:8px" type="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" autocapitalize="off">
-    <textarea id="reqMsg" class="input" style="margin-top:8px" placeholder="Kurze Nachricht (optional)"></textarea>
-    <a class="opbtn" id="reqBtn" style="display:block;text-align:center;text-decoration:none" href="#">✉︎ Passwort anfragen</a>
+    <a class="opbtn" id="reqBtn" style="display:block;text-align:center;text-decoration:none" href="#">✉︎ Zugang anfragen</a>
     <p class="hint" style="margin-top:14px"><a href="rechtliches.html" style="color:inherit">Impressum · Datenschutz</a> · © 2026 Tekin Kaplan</p>
   </div>
 </div>
@@ -336,7 +334,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
       <li><button type="button" id="mUpdate"><span class="i">⟳</span><span>Nach Update suchen<small id="mVer"></small></span></button></li>
       <li id="mAdminLi" hidden><a href="zugang.html"><span class="i">👥</span><span>Zugänge verwalten<small>Personen freischalten oder entfernen</small></span></a></li>
       <li><a href="rechtliches.html"><span class="i">§</span><span>Impressum, Datenschutz, Lizenzen</span></a></li>
-      <li><button type="button" id="mLock"><span class="i">🔒</span><span>Abmelden<small>E-Mail und Passwort beim nächsten Öffnen wieder abfragen</small></span></button></li>
+      <li><button type="button" id="mLock"><span class="i">🔒</span><span>Abmelden<small>Danach brauchst du deinen Zugangslink wieder</small></span></button></li>
     </ul>
     <div class="sheetbar"><button type="button" class="primary" style="margin-top:0" id="moreDone">Schließen</button></div>
   </div>
@@ -355,7 +353,7 @@ dialog.sheet::backdrop{background:rgba(0,0,0,.5)}
 (function(){
 "use strict";
 /* Ladestopp · © 2026 Tekin Kaplan · Alle Rechte vorbehalten */
-const APP_VERSION="1.4.0";
+const APP_VERSION="1.5.0";
 const $ = id => document.getElementById(id);
 const store = {
   get(k,d){try{const v=localStorage.getItem("ladestopp:"+k);return v?JSON.parse(v):d}catch(e){return d}},
@@ -733,36 +731,54 @@ function renderStops(){
 
 renderFilters();
 
-/* ---------- Zugang mit persönlichem Passwort (je E-Mail) ---------- */
+/* ---------- Zugang per persönlichem Link (signiert) ---------- */
 const OWNER_MAIL="kaplaniket@gmail.com";
+const PUBKEY={"kty":"EC","crv":"P-256","x":"FNA_yvRJ8SuYwNEX6updABbhj4rSrUtNwvePCmpv5VI","y":"5BzHaRtpXfnxMLneowhGpSyq3YCqrzdpGYvEhlVMhAQ"};
 let unlocked=false;const unlockWaiters=[];
 function whenUnlocked(fn){unlocked?fn():unlockWaiters.push(fn)}
-async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
-async function loadUsers(){const r=await fetch(new URL("users.json?t="+Date.now(),location.href).href,{cache:"no-store"});if(!r.ok)throw new Error(r.status);return new Set((await r.json()).users||[])}
-function showLock(msg){unlocked=false;$("lock").hidden=false;$("lockErr").textContent=msg||"";const m=store.get("mail","");if(m)$("lockMail").value=m;setTimeout(()=>(m?$("lockPw"):$("lockMail")).focus(),300);}
+const te=new TextEncoder();
+function b64uDec(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
+function b64uEnc(t){return btoa(String.fromCharCode(...te.encode(t))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+async function shaHex(t){const b=await crypto.subtle.digest("SHA-256",te.encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+async function checkCode(code){
+  try{
+    const m=String(code).match(/zugang=([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)/)||String(code).trim().match(/^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/);
+    if(!m)return null;
+    const mail=new TextDecoder().decode(b64uDec(m[1]));
+    const key=await crypto.subtle.importKey("jwk",PUBKEY,{name:"ECDSA",namedCurve:"P-256"},false,["verify"]);
+    const ok=await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},key,b64uDec(m[2]),te.encode("ladestopp:v1:"+mail));
+    return ok?{mail,code:m[1]+"."+m[2]}:null;
+  }catch(e){return null}
+}
+async function isRevoked(mail){
+  try{const r=await fetch(new URL("users.json?t="+Date.now(),location.href).href,{cache:"no-store"});if(!r.ok)return false;
+    const j=await r.json();return (j.revoked||[]).includes(await shaHex("ladestopp:"+mail));}catch(e){return false}
+}
+function showLock(msg){unlocked=false;$("lock").hidden=false;$("lockErr").textContent=msg||"";}
 function doUnlock(){unlocked=true;$("lock").hidden=true;unlockWaiters.splice(0).forEach(f=>{try{f()}catch(e){}});}
 async function verifyAccess(){
-  const tok=store.get("unlock",null);
-  if(!tok){showLock();return}
+  const hadLink=/zugang=/.test(location.hash);
+  const fromLink=hadLink?await checkCode(location.hash):null;
+  if(hadLink)history.replaceState(null,"",location.pathname+location.search);
+  if(fromLink){store.set("access",fromLink.code);store.set("mail",fromLink.mail);}
+  const saved=store.get("access",null);
+  const ok=saved?await checkCode(saved):null;
+  if(!ok){showLock(hadLink&&!fromLink?"Dieser Zugangslink ist ungültig. Bitte frag einen neuen an.":"");return}
+  if(await isRevoked(ok.mail)){store.set("access",null);showLock("Dein Zugang wurde beendet. Du kannst unten einen neuen anfragen.");return}
   if(!unlocked)doUnlock();
-  try{const u=await loadUsers();if(!u.has(tok)){store.set("unlock",null);showLock("Dein Zugang ist nicht mehr gültig. Bitte neu anmelden oder einen Zugang anfragen.");}}catch(e){}
 }
 verifyAccess();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&unlocked)verifyAccess()});
-$("lockForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const mail=$("lockMail").value.trim().toLowerCase(),pw=$("lockPw").value;
-  if(!mail||!pw){$("lockErr").textContent="Bitte E-Mail und Passwort eingeben.";return}
-  let h,u;
-  try{h=await sha("ladestopp:"+mail+":"+pw)}catch(x){$("lockErr").textContent="Dein Browser unterstützt die Prüfung nicht. Öffne die App in Safari oder Chrome.";return}
-  try{u=await loadUsers()}catch(x){$("lockErr").textContent="Keine Verbindung. Bitte prüfe dein Internet und versuch es noch einmal.";return}
-  if(u.has(h)){store.set("unlock",h);store.set("mail",mail);$("lockPw").value="";$("lockErr").textContent="";doUnlock();}
-  else{$("lockErr").textContent="E-Mail oder Passwort stimmt nicht.";$("lockPw").select();}
+$("codeBtn").addEventListener("click",async()=>{
+  const ok=await checkCode($("codeIn").value);
+  if(!ok){$("lockErr").textContent="Das ist kein gültiger Zugangslink. Kopiere den ganzen Link aus der E-Mail.";return}
+  store.set("access",ok.code);store.set("mail",ok.mail);$("lockErr").textContent="";verifyAccess();
 });
 function reqHref(){
-  const n=$("reqName").value.trim(),em=$("reqMail").value.trim(),m=$("reqMsg").value.trim();
-  const body=`Hallo Tekin,\n\nich würde gerne die App Ladestopp nutzen. Kannst du mir einen Zugang einrichten?\n\nName: ${n}\nE-Mail für den Zugang: ${em}\n\n${m?m+"\n\n":""}Viele Grüße\n${n}`;
-  return `mailto:${OWNER_MAIL}?subject=${encodeURIComponent("Ladestopp: Passwort-Anfrage"+(n?" von "+n:""))}&body=${encodeURIComponent(body)}`;
+  const n=$("reqName").value.trim(),em=$("reqMail").value.trim().toLowerCase(),m="";
+  const admin=new URL("zugang.html",location.href).href+"#neu="+b64uEnc(em)+"&name="+b64uEnc(n);
+  const body=`Hallo Tekin,\n\nich würde gerne die App Ladestopp nutzen.\n\nName: ${n}\nE-Mail: ${em}\n\nViele Grüße\n${n}\n\n—\nFür Tekin: Zum Freischalten hier tippen:\n${admin}`;
+  return `mailto:${OWNER_MAIL}?subject=${encodeURIComponent("Ladestopp: Zugang für "+(n||em))}&body=${encodeURIComponent(body)}`;
 }
 $("reqBtn").addEventListener("click",e=>{e.preventDefault();
   if(!$("reqName").value.trim()){$("reqName").focus();$("reqName").placeholder="Bitte zuerst deinen Namen eintragen";return}
@@ -855,7 +871,7 @@ $("tbGo").addEventListener("click",()=>{
   run();
 });
 function syncMenu(){
-  try{$("mAdminLi").hidden=!localStorage.getItem("ladestopp-admin:token")}catch(e){}
+  try{$("mAdminLi").hidden=!localStorage.getItem("ladestopp-admin:key")}catch(e){}
   $("mLiveT").classList.toggle("on",!!live);
   const t=store.get("theme","auto");$("mDarkS").textContent={auto:"Wie Handy",light:"Hell",dark:"Dunkel"}[t];
   $("mVer").textContent="Installiert: Version "+APP_VERSION;
@@ -876,7 +892,7 @@ $("mReset").addEventListener("click",()=>{S.plugs=[];S.power=0;S.radius=3;S.ops=
 $("mNew").addEventListener("click",()=>{S.to=null;S.route=null;S.stations=[];S.selected.clear();$("to").value="";routeLayer.clearLayers();stLayer.clearLayers();$("results").hidden=true;$("stopsBox").hidden=true;$("plateSub").textContent="Ziel eingeben, Ladesäulen auswählen, losfahren.";setStatus("");closeDlg("moreDialog");panel.scrollTo({top:0,behavior:"smooth"});setTimeout(()=>$("to").focus(),250);});
 $("mInstall").addEventListener("click",()=>{closeDlg("moreDialog");showTab(isAndroid);openDlg("instDialog")});
 $("mUpdate").addEventListener("click",async()=>{try{sessionStorage.removeItem("ladestopp:skip")}catch(e){}closeDlg("moreDialog");await checkUpdate();if($("updBar").hidden)setStatus("Du hast die neueste Version ("+APP_VERSION+").");});
-$("mLock").addEventListener("click",()=>{store.set("unlock",null);location.reload();});
+$("mLock").addEventListener("click",()=>{store.set("access",null);location.reload();});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
 setInterval(checkUpdate,30*60*1000);
 })();
