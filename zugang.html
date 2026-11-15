@@ -42,7 +42,10 @@ details summary{cursor:pointer;color:var(--muted)}
 
 <section id="nokey" hidden>
   <h2>Noch nicht eingerichtet</h2>
-  <p class="muted">Diese Seite braucht einmalig deinen Einrichtungslink. Öffne ihn aus dem Chat mit Claude in <b>Safari</b>. Danach funktioniert alles auf diesem Handy.</p>
+  <p class="muted">Auf diesem Gerät bzw. in diesem Browser fehlt noch dein Einrichtungslink. Kopiere ihn aus dem Chat mit Claude (er beginnt mit <b>https://kaplaniket.github.io/ladestopp/zugang.html#k=</b>) und füge ihn hier ein. Das ist pro Gerät nur einmal nötig.</p>
+  <input id="keyIn" autocapitalize="off" spellcheck="false" autocomplete="off" placeholder="Einrichtungslink einfügen">
+  <button id="keyBtn" class="amber">Einrichten</button>
+  <p class="msg" id="keyMsg"></p>
 </section>
 
 <section id="welcome" class="done" hidden>
@@ -137,8 +140,22 @@ $("rmBtn").onclick=async()=>{
   try{await navigator.clipboard.writeText("Sperrcode Ladestopp: "+c);msg("rmMsg","Kopiert ✓ Jetzt an Claude schicken: "+c,"ok")}catch(e){msg("rmMsg","Sperrcode: "+c)}
 };
 
+$("keyBtn").onclick=async()=>{
+  const m=$("keyIn").value.match(/#k=([A-Za-z0-9_-]{100,})/)||$("keyIn").value.trim().match(/^([A-Za-z0-9_-]{100,})$/);
+  if(!m)return msg("keyMsg","Das ist nicht der Einrichtungslink. Kopiere den ganzen Link aus dem Chat.","err");
+  ls.set(KEY,m[1]);
+  try{await signer()}catch(e){ls.set(KEY,null);return msg("keyMsg","Der Link ist unvollständig. Bitte den ganzen Link kopieren.","err")}
+  $("nokey").hidden=true;show(true);
+};
+function show(isFresh){
+  if(isFresh)$("welcome").hidden=false;
+  $("form").hidden=false;$("extra").hidden=false;
+  $("n").value=pre.n;$("m").value=pre.m;
+  if(pre.m)msg("msg",`Anfrage von ${pre.n||pre.m}. Tippe auf „Zugang senden“.`,"ok");
+}
 if(!ls.get(KEY)){$("nokey").hidden=false}
-else{
+else{show(fresh)}
+if(false){
   if(fresh)$("welcome").hidden=false;
   $("form").hidden=false;$("extra").hidden=false;
   $("n").value=pre.n;$("m").value=pre.m;
